@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --canvas: 244 243 239;
+  --panel: 252 251 248;
+  --ink: 36 36 34;
+  --muted: 118 116 110;
+  --subtle: 236 234 228;
+  --line: 222 220 213;
+  --accent: 218 91 68;
+  --success: 62 133 104;
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+.dark {
+  --canvas: 20 20 19;
+  --panel: 28 28 27;
+  --ink: 239 237 231;
+  --muted: 153 151 145;
+  --subtle: 46 45 43;
+  --line: 57 56 53;
+  --accent: 234 113 88;
+  --success: 103 174 142;
+  color-scheme: dark;
+}
+
+* {
+  border-color: rgb(var(--line));
+}
+
+html {
+  min-width: 320px;
+  background: rgb(var(--canvas));
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  background: rgb(var(--canvas));
+  color: rgb(var(--ink));
+  font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgb(var(--accent) / 0.18);
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgb(var(--muted) / 0.32);
+  background-clip: padding-box;
+}
+
+@layer components {
+  .glass-panel {
+    background: rgb(var(--panel) / 0.82);
+    box-shadow: 0 1px 1px rgb(0 0 0 / 0.025), 0 16px 50px rgb(27 24 18 / 0.045);
+    backdrop-filter: blur(18px) saturate(1.15);
+  }
+
+  .surface {
+    @apply rounded-2xl border bg-panel shadow-soft;
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted;
+  }
+
+  .focus-ring {
+    @apply outline-none ring-offset-2 ring-offset-canvas focus-visible:ring-2 focus-visible:ring-accent/50;
+  }
+
+  .markdown-answer {
+    @apply text-foreground;
+  }
+
+  .markdown-answer > *:first-child {
+    @apply mt-0;
+  }
+
+  .markdown-answer > *:last-child {
+    @apply mb-0;
+  }
+
+  .markdown-answer p {
+    @apply my-3 whitespace-pre-wrap;
+  }
+
+  .markdown-answer ul,
+  .markdown-answer ol {
+    @apply my-3 pl-5;
+  }
+
+  .markdown-answer ul {
+    @apply list-disc;
+  }
+
+  .markdown-answer ol {
+    @apply list-decimal;
+  }
+
+  .markdown-answer li {
+    @apply my-1;
+  }
+
+  .markdown-answer pre {
+    @apply my-4 overflow-x-auto rounded-2xl border border-white/10 bg-[#101114] p-4 text-xs leading-6 text-white shadow-inner;
+  }
+
+  .markdown-answer code {
+    font-family: 'DM Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+
+  .markdown-answer :not(pre) > code {
+    @apply rounded-md bg-muted px-1.5 py-0.5 text-[0.88em] text-foreground;
+  }
+
+  .markdown-answer pre code {
+    @apply bg-transparent p-0 text-white;
+  }
+
+  .markdown-answer .shiki-code-body pre {
+    @apply m-0 rounded-none border-0 bg-transparent p-4 shadow-none;
+  }
+
+  .markdown-answer table {
+    @apply my-4 w-full border-collapse overflow-hidden rounded-xl text-left text-xs;
+  }
+
+  .markdown-answer th,
+  .markdown-answer td {
+    @apply border border-border px-3 py-2;
+  }
+
+  .markdown-answer th {
+    @apply bg-muted/60 font-semibold text-foreground;
+  }
+}
+
+.ambient-glow::before {
+  position: fixed;
+  z-index: -1;
+  top: -280px;
+  right: -180px;
+  width: 620px;
+  height: 620px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(var(--accent) / 0.07), transparent 67%);
+  content: '';
+  pointer-events: none;
+}
+
+.dot-grid {
+  background-image: radial-gradient(rgb(var(--muted) / 0.21) 0.7px, transparent 0.7px);
+  background-size: 13px 13px;
+}
+
+.editor-grid {
+  background-image: linear-gradient(rgb(var(--line) / 0.42) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--line) / 0.42) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* `muted` is a surface token in the feature workspaces; these text utilities
+   retain the quieter ink token used by the application shell. */
+.text-muted,
+[class*='text-muted/'] {
+  color: rgb(var(--muted));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
