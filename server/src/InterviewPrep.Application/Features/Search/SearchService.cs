@@ -15,115 +15,139 @@ internal sealed class SearchService(IUnitOfWork unitOfWork) : ISearchService
             return [];
         }
 
-        // Aynı scoped DbContext paralel sorguyu desteklemez; sorgular bilinçli olarak sıralı çalışır.
         var topics = await unitOfWork.Repository<Topic>().ListAsync(
-            topic => new SearchResultDto(
+            topic => new TopicSearchCandidate(
                 topic.Id,
                 topic.Name,
+                topic.Category,
                 topic.Description,
-                "Topic",
-                "/topics/" + topic.Id),
-            topic => !topic.IsArchived
-                && (topic.Name.Contains(term)
-                    || topic.Category.Contains(term)
-                    || topic.Description.Contains(term)
-                    || topic.TopicTags.Any(join => join.Tag.Name.Contains(term))),
-            topics => topics.OrderBy(topic => topic.Name),
-            take: 8,
+                topic.TopicTags.Select(join => join.Tag.Name).ToList()),
+            topic => !topic.IsArchived,
+            topics => topics.OrderBy(topic => topic.ParentTopicId.HasValue)
+                .ThenBy(topic => topic.SortOrder)
+                .ThenBy(topic => topic.Name),
             cancellationToken: cancellationToken);
 
-        var notes = await unitOfWork.Repository<Note>().ListAsync(
-            note => new SearchResultDto(
-                note.Id,
-                note.Title,
-                note.Content.Length > 160 ? note.Content.Substring(0, 160) : note.Content,
-                "Note",
-                "/notes?id=" + note.Id),
-            note => note.Title.Contains(term) || note.Content.Contains(term),
-            notes => notes.OrderByDescending(note => note.UpdatedAtUtc),
-            take: 8,
-            cancellationToken: cancellationToken);
-
-        var codingQuestions = await unitOfWork.Repository<CodingQuestion>().ListAsync(
-            question => new SearchResultDto(
-                question.Id,
-                question.Title,
-                question.Description,
-                "CodingQuestion",
-                "/coding?id=" + question.Id),
-            question => question.Title.Contains(term)
-                || question.Description.Contains(term)
-                || question.StarterCode.Contains(term),
-            questions => questions.OrderBy(question => question.Title),
-            take: 8,
-            cancellationToken: cancellationToken);
+        var topicResults = topics
+            .Select(topic => new ScoredSearchResult(
+                new SearchResultDto(
+                    topic.Id,
+                    topic.Name,
+                    topic.Description,
+                    "Topic",
+                    "/topics/" + topic.Id),
+                ScoreTopic(term, topic)))
+            .Where(result => result.Score > 0);
 
         var flashcards = await unitOfWork.Repository<Flashcard>().ListAsync(
-            card => new SearchResultDto(
+            card => new FlashcardSearchCandidate(
                 card.Id,
                 card.Question,
-                card.Answer.Length > 160 ? card.Answer.Substring(0, 160) : card.Answer,
-                "Flashcard",
-                "/flashcards?id=" + card.Id),
-            card => card.Question.Contains(term)
-                || card.Answer.Contains(term)
-                || (card.Why != null && card.Why.Contains(term))
-                || (card.ProductionExample != null && card.ProductionExample.Contains(term))
-                || (card.BankingExample != null && card.BankingExample.Contains(term))
-                || (card.InterviewTip != null && card.InterviewTip.Contains(term))
-                || (card.Topic != null && card.Topic.Name.Contains(term))
-                || card.FlashcardTags.Any(join => join.Tag.Name.Contains(term)),
-            cards => cards.OrderBy(card => card.NextReviewAtUtc),
-            take: 8,
+                card.Answer,
+                card.Why,
+                card.ProductionExample,
+                card.BankingExample,
+                card.InterviewTip,
+                card.Topic == null ? null : card.Topic.Name,
+                card.FlashcardTags.Select(join => join.Tag.Name).ToList()),
+            orderBy: cards => cards.OrderByDescending(card => card.CreatedAtUtc),
             cancellationToken: cancellationToken);
 
-        var sessions = await unitOfWork.Repository<InterviewSession>().ListAsync(
-            session => new SearchResultDto(
-                session.Id,
-                session.Title,
-                session.SummaryFeedback,
-                "InterviewSession",
-                "/mock-interviews?id=" + session.Id),
-            session => session.Title.Contains(term) || session.SummaryFeedback.Contains(term),
-            sessions => sessions.OrderByDescending(session => session.UpdatedAtUtc),
-            take: 6,
-            cancellationToken: cancellationToken);
+        var flashcardResults = flashcards
+            .Select(card => new ScoredSearchResult(
+                new SearchResultDto(
+                    card.Id,
+                    card.Question,
+                    Preview(card.Answer),
+                    "Flashcard",
+                    "/flashcards?id=" + card.Id),
+                ScoreFlashcard(term, card)))
+            .Where(result => result.Score > 0);
 
-        var interviewQuestions = await unitOfWork.Repository<InterviewAnswer>().ListAsync(
-            answer => new SearchResultDto(
-                answer.Id,
-                answer.Question,
-                answer.InterviewSession.Title,
-                "InterviewQuestion",
-                "/mock-interviews?id=" + answer.InterviewSessionId),
-            answer => answer.Question.Contains(term) || answer.Answer.Contains(term),
-            answers => answers.OrderByDescending(answer => answer.UpdatedAtUtc),
-            take: 8,
-            cancellationToken: cancellationToken);
-
-        var systemDesigns = await unitOfWork.Repository<SystemDesignScenario>().ListAsync(
-            scenario => new SearchResultDto(
-                scenario.Id,
-                scenario.Title,
-                scenario.Problem,
-                "SystemDesignScenario",
-                "/system-design?id=" + scenario.Id),
-            scenario => scenario.Title.Contains(term)
-                || scenario.Problem.Contains(term)
-                || scenario.Architecture.Contains(term)
-                || scenario.Requirements.Contains(term),
-            scenarios => scenarios.OrderByDescending(scenario => scenario.UpdatedAtUtc),
-            take: 8,
-            cancellationToken: cancellationToken);
-
-        return topics
-            .Concat(notes)
-            .Concat(codingQuestions)
-            .Concat(flashcards)
-            .Concat(sessions)
-            .Concat(interviewQuestions)
-            .Concat(systemDesigns)
+        return topicResults
+            .Concat(flashcardResults)
+            .OrderByDescending(result => result.Score)
+            .ThenBy(result => result.Result.Kind)
+            .ThenBy(result => result.Result.Title)
             .Take(40)
+            .Select(result => result.Result)
             .ToList();
     }
+
+    private static int ScoreTopic(string term, TopicSearchCandidate topic) =>
+        (ScoreText(term, topic.Name) * 5)
+        + (ScoreText(term, topic.Category) * 2)
+        + ScoreText(term, topic.Description)
+        + (topic.Tags.Select(tag => ScoreText(term, tag)).DefaultIfEmpty(0).Max() * 3);
+
+    private static int ScoreFlashcard(string term, FlashcardSearchCandidate card) =>
+        (ScoreText(term, card.Question) * 8)
+        + (card.Tags.Select(tag => ScoreText(term, tag)).DefaultIfEmpty(0).Max() * 3)
+        + (ScoreText(term, card.TopicName) * 2)
+        + ScoreText(term, card.Answer)
+        + ScoreText(term, card.Why)
+        + ScoreText(term, card.ProductionExample)
+        + ScoreText(term, card.BankingExample)
+        + ScoreText(term, card.InterviewTip);
+
+    private static int ScoreText(string term, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(term) || string.IsNullOrWhiteSpace(value))
+        {
+            return 0;
+        }
+
+        var normalizedTerm = NormalizeSearchText(term);
+        var normalizedValue = NormalizeSearchText(value);
+
+        if (normalizedValue.Equals(normalizedTerm, StringComparison.OrdinalIgnoreCase))
+        {
+            return 100;
+        }
+
+        if (normalizedValue.StartsWith(normalizedTerm, StringComparison.OrdinalIgnoreCase))
+        {
+            return 90;
+        }
+
+        if (normalizedValue.Contains(normalizedTerm, StringComparison.OrdinalIgnoreCase))
+        {
+            return 75;
+        }
+
+        var tokens = normalizedTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return tokens.Length > 1 && tokens.All(token => normalizedValue.Contains(token, StringComparison.OrdinalIgnoreCase))
+            ? 35
+            : 0;
+    }
+
+    private static string NormalizeSearchText(string value) =>
+        value
+            .Replace('-', ' ')
+            .Replace('_', ' ')
+            .Replace('/', ' ')
+            .Replace('.', ' ');
+
+    private static string Preview(string value) =>
+        value.Length > 160 ? value[..160] : value;
+
+    private sealed record ScoredSearchResult(SearchResultDto Result, int Score);
+
+    private sealed record TopicSearchCandidate(
+        Guid Id,
+        string Name,
+        string Category,
+        string Description,
+        IReadOnlyList<string> Tags);
+
+    private sealed record FlashcardSearchCandidate(
+        Guid Id,
+        string Question,
+        string Answer,
+        string? Why,
+        string? ProductionExample,
+        string? BankingExample,
+        string? InterviewTip,
+        string? TopicName,
+        IReadOnlyList<string> Tags);
 }

@@ -12,6 +12,7 @@ export interface TopicDto {
   confidenceLevel: number
   estimatedMastery: number
   accentColor: string
+  sortOrder: number
   parentTopicId?: string | null
   parentTopicName?: string | null
   tags: string[]
@@ -27,6 +28,7 @@ export interface CreateTopicInput {
   confidenceLevel: number
   estimatedMastery: number
   accentColor?: string
+  sortOrder?: number | null
   parentTopicId?: string | null
   tags?: string[]
 }
@@ -41,6 +43,11 @@ export interface UpdateTopicInput extends CreateTopicInput {
 export interface UpdateTopicProgressInput {
   progress: number
   confidenceLevel: number
+}
+
+export interface ReorderTopicsInput {
+  parentTopicId?: string | null
+  topicIds: string[]
 }
 
 export interface NoteSummaryDto {

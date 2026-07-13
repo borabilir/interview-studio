@@ -16,6 +16,7 @@ internal sealed class TopicConfiguration : BaseEntityConfiguration<Topic>
         builder.Property(topic => topic.Priority).HasConversion<string>().HasMaxLength(20);
         builder.HasIndex(topic => topic.Name);
         builder.HasIndex(topic => topic.ParentTopicId);
+        builder.HasIndex(topic => new { topic.ParentTopicId, topic.SortOrder });
         builder.HasOne(topic => topic.ParentTopic)
             .WithMany(topic => topic.Subtopics)
             .HasForeignKey(topic => topic.ParentTopicId)

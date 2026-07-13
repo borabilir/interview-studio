@@ -2,6 +2,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowUpRight,
   BookOpenCheck,
   ChevronDown,
@@ -28,6 +30,7 @@ import {
 import {
   FlashcardInsightEditorFields,
 } from '../components/features/FlashcardInsightFields'
+import { SmartQuestionPaste } from '../components/features/SmartQuestionPaste'
 import {
   emptyFlashcardInsights,
   normalizeFlashcardInsights,
@@ -35,14 +38,21 @@ import {
 } from '../components/features/flashcardInsightModel'
 import { RichAnswerEditor } from '../components/features/RichAnswerEditor'
 import { FlashcardWhyEditorField } from '../components/features/FlashcardWhySection'
+import { useDebouncedValue } from '../hooks/use-debounced-value'
 import { useI18n } from '../i18n'
 import { api } from '../services/api'
 import { queryKeys } from '../services/queryKeys'
+import {
+  appendCodeBlocksToAnswer,
+  sameLooseName,
+  type ParsedFlashcardImport,
+} from '../utils/flashcardImport'
 import type {
   ApiDifficulty,
   ApiPriority,
   CreateTopicInput,
   FlashcardDto,
+  ReorderTopicsInput,
   TopicDto,
   UpdateTopicInput,
   UpsertFlashcardInput,
@@ -95,6 +105,12 @@ const priorityTone: Record<ApiPriority, 'neutral' | 'warning' | 'danger'> = {
 const EMPTY_TOPICS: TopicDto[] = []
 const EMPTY_CARDS: FlashcardDto[] = []
 
+function compareTopics(locale: string) {
+  return (a: TopicDto, b: TopicDto) =>
+    a.sortOrder - b.sortOrder
+    || a.name.localeCompare(b.name, locale)
+}
+
 function splitTags(value: string) {
   return value
     .split(',')
@@ -110,6 +126,7 @@ export default function TopicsPage() {
   const requestedTopicId = searchParams.get('id')
   const quickAddRequested = searchParams.get('quickAdd') === '1'
   const [query, setQuery] = useState('')
+  const debouncedQuery = useDebouncedValue(query.trim(), 250)
   const [createOpen, setCreateOpen] = useState(false)
   const [editingTopic, setEditingTopic] = useState<TopicDto | null>(null)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
@@ -133,7 +150,7 @@ export default function TopicsPage() {
 
   const topicById = useMemo(() => new Map(topics.map((topic) => [topic.id, topic])), [topics])
   const rootTopics = useMemo(
-    () => topics.filter((topic) => !topic.parentTopicId).sort((a, b) => a.name.localeCompare(b.name, locale)),
+    () => topics.filter((topic) => !topic.parentTopicId).sort(compareTopics(locale)),
     [locale, topics],
   )
   const childrenByParent = useMemo(() => {
@@ -145,7 +162,7 @@ export default function TopicsPage() {
       map.set(topic.parentTopicId, children)
     }
     for (const children of map.values()) {
-      children.sort((a, b) => a.name.localeCompare(b.name, locale))
+      children.sort(compareTopics(locale))
     }
     return map
   }, [locale, topics])
@@ -158,7 +175,7 @@ export default function TopicsPage() {
   }, [cards, locale, topics])
 
   const visibleTopics = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase(locale)
+    const normalized = debouncedQuery.toLocaleLowerCase(locale)
     if (!normalized) return rootTopics
 
     return rootTopics.filter((topic) => {
@@ -171,7 +188,7 @@ export default function TopicsPage() {
       ]
       return values.some((value) => value.toLocaleLowerCase(locale).includes(normalized))
     })
-  }, [childrenByParent, locale, query, rootTopics])
+  }, [childrenByParent, debouncedQuery, locale, rootTopics])
 
   const cardCountFor = (topic: TopicDto) => {
     const ids = new Set([topic.id, ...(childrenByParent.get(topic.id) ?? []).map((child) => child.id)])
@@ -221,6 +238,14 @@ export default function TopicsPage() {
         setEditingTopic(null)
         setCreateOpen(false)
       }
+    },
+  })
+
+  const reorderTopics = useMutation({
+    mutationFn: (input: ReorderTopicsInput) => api.topics.reorder<TopicDto[]>(input),
+    onSuccess: (updatedTopics) => {
+      queryClient.setQueryData(queryKeys.topics.all, updatedTopics)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.topics.all })
     },
   })
 
@@ -288,9 +313,15 @@ export default function TopicsPage() {
     setQuickAddOpen(true)
   }
 
-  const openCreateTopic = () => {
+  const openCreateTopic = (parentTopicId?: string) => {
+    const parentTopic = parentTopicId ? topicById.get(parentTopicId) : undefined
     setEditingTopic(null)
-    setNewTopic(emptyTopic)
+    setNewTopic({
+      ...emptyTopic,
+      category: parentTopic?.name ?? emptyTopic.category,
+      accentColor: parentTopic?.accentColor ?? emptyTopic.accentColor,
+      parentTopicId: parentTopicId ?? null,
+    })
     setTopicTagText('')
     saveTopic.reset()
     setCreateOpen(true)
@@ -325,6 +356,18 @@ export default function TopicsPage() {
       }
       return next
     })
+  }
+
+  const moveTopic = (siblings: TopicDto[], topicId: string, direction: -1 | 1, parentTopicId: string | null = null) => {
+    const index = siblings.findIndex((topic) => topic.id === topicId)
+    const nextIndex = index + direction
+    if (index < 0 || nextIndex < 0 || nextIndex >= siblings.length) return
+
+    const topicIds = siblings.map((topic) => topic.id)
+    const currentId = topicIds[index]
+    topicIds[index] = topicIds[nextIndex]
+    topicIds[nextIndex] = currentId
+    reorderTopics.mutate({ parentTopicId, topicIds })
   }
 
   const confirmDeleteTopic = (topic: TopicDto) => {
@@ -362,6 +405,96 @@ export default function TopicsPage() {
   const canSaveQuestion = Boolean(draft.question.trim() && draft.answer.trim() && draft.topicId)
   const canChangeTopicParent = !editingTopic || (childrenByParent.get(editingTopic.id)?.length ?? 0) === 0
 
+  const applyImportedQuestion = (parsed: ParsedFlashcardImport) => {
+    const applied: string[] = []
+    const ignored: string[] = []
+    const next: QuickQuestionDraft = { ...draft, insights: { ...draft.insights } }
+
+    if (parsed.topic) {
+      const root = rootTopics.find((topic) => sameLooseName(topic.name, parsed.topic!))
+      if (root) {
+        next.topicId = root.id
+        next.subtopicId = ''
+        next.newSubtopic = ''
+        applied.push('Konu')
+      } else {
+        ignored.push(`Ana konu bulunamadı: ${parsed.topic}`)
+      }
+    }
+
+    if (parsed.subtopic) {
+      const rootId = next.topicId || rootTopics[0]?.id
+      const subtopic = rootId
+        ? (childrenByParent.get(rootId) ?? []).find((topic) => sameLooseName(topic.name, parsed.subtopic!))
+        : undefined
+
+      if (subtopic) {
+        next.subtopicId = subtopic.id
+        next.newSubtopic = ''
+      } else {
+        next.subtopicId = ''
+        next.newSubtopic = parsed.subtopic
+      }
+      applied.push('Alt konu')
+    }
+
+    if (parsed.question) {
+      next.question = parsed.question
+      applied.push('Soru')
+    }
+
+    if (parsed.answer || parsed.codeBlocks.length) {
+      next.answer = appendCodeBlocksToAnswer(parsed.answer ?? next.answer, parsed.codeBlocks)
+      applied.push(parsed.codeBlocks.length ? 'Cevap + Kod' : 'Cevap')
+    }
+
+    if (parsed.why) {
+      next.why = parsed.why
+      applied.push('Why')
+    }
+
+    if (parsed.productionExample) {
+      next.insights.productionExample = parsed.productionExample
+      applied.push('Production Example')
+    }
+
+    if (parsed.bankingExample) {
+      next.insights.bankingExample = parsed.bankingExample
+      applied.push('Banking Example')
+    }
+
+    if (parsed.interviewTip) {
+      next.insights.interviewTip = parsed.interviewTip
+      applied.push('Interview Tip')
+    }
+
+    if (parsed.interviewFrequency) {
+      next.insights.interviewFrequency = parsed.interviewFrequency
+      applied.push('Sorulma olasılığı')
+    }
+
+    if (parsed.difficulty) {
+      next.difficulty = parsed.difficulty
+      applied.push('Zorluk')
+    }
+
+    if (parsed.tags.length || parsed.questionType) {
+      const tags = [...parsed.tags]
+      if (parsed.questionType && !tags.some((tag) => sameLooseName(tag, parsed.questionType!))) {
+        tags.push(parsed.questionType.toLocaleLowerCase('tr-TR'))
+      }
+      next.tags = tags.join(', ')
+      applied.push(parsed.questionType ? 'Etiketler + Soru tipi' : 'Etiketler')
+    }
+
+    if (parsed.relatedQuestions) {
+      ignored.push('İlgili sorular için ayrı alan yok')
+    }
+
+    setDraft(next)
+    return { applied, ignored }
+  }
+
   return (
     <div className="mx-auto w-full max-w-[1280px] space-y-6">
       <PageHeader
@@ -373,7 +506,7 @@ export default function TopicsPage() {
         )}
         actions={(
           <>
-            <ActionButton icon={Plus} onClick={openCreateTopic}>{t('Konu ekle', 'Add topic')}</ActionButton>
+            <ActionButton icon={Plus} onClick={() => openCreateTopic()}>{t('Konu ekle', 'Add topic')}</ActionButton>
             <ActionButton icon={BookOpenCheck} variant="primary" onClick={() => openQuickAdd()}>
               {t('Hızlı soru ekle', 'Quick add question')}
             </ActionButton>
@@ -432,37 +565,52 @@ export default function TopicsPage() {
         </Panel>
       ) : visibleTopics.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visibleTopics.map((topic) => {
+          {visibleTopics.map((topic, topicIndex) => {
             const children = childrenByParent.get(topic.id) ?? []
             const childrenExpanded = expandedTopicIds.has(topic.id)
             const count = cardCountFor(topic)
+            const topicCanMoveUp = !query.trim() && topicIndex > 0
+            const topicCanMoveDown = !query.trim() && topicIndex < rootTopics.length - 1
             return (
-              <Panel key={topic.id} className="relative overflow-hidden p-5 transition hover:-translate-y-0.5 hover:border-primary/25">
+              <Panel key={topic.id} className="group relative overflow-hidden p-5 transition hover:-translate-y-0.5 hover:border-primary/25">
                 <div className="absolute inset-x-0 top-0 h-0.5" style={{ backgroundColor: topic.accentColor }} />
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                        <FolderTree className="size-4" />
-                      </span>
-                      <div className="min-w-0">
-                        <Link to={`/topics/${encodeURIComponent(topic.id)}`} className="block truncate text-base font-semibold tracking-tight text-foreground hover:text-primary">
-                          {topic.name}
-                        </Link>
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{topic.category}</p>
-                      </div>
+                <div className="absolute right-4 top-4 z-10 flex items-center gap-1 rounded-2xl border border-border/70 bg-card/90 p-1 shadow-lg shadow-black/5 backdrop-blur transition duration-200 sm:pointer-events-none sm:translate-y-1 sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:translate-y-0 sm:group-hover:opacity-100 sm:group-focus-within:pointer-events-auto sm:group-focus-within:translate-y-0 sm:group-focus-within:opacity-100">
+                  <IconButton
+                    icon={ArrowUp}
+                    label={t('Konuyu yukarı taşı', 'Move topic up')}
+                    className="size-8"
+                    disabled={!topicCanMoveUp || reorderTopics.isPending}
+                    onClick={() => moveTopic(rootTopics, topic.id, -1)}
+                  />
+                  <IconButton
+                    icon={ArrowDown}
+                    label={t('Konuyu aşağı taşı', 'Move topic down')}
+                    className="size-8"
+                    disabled={!topicCanMoveDown || reorderTopics.isPending}
+                    onClick={() => moveTopic(rootTopics, topic.id, 1)}
+                  />
+                  <IconButton icon={Pencil} label={t('Konuyu düzenle', 'Edit topic')} className="size-8" onClick={() => openEditTopic(topic)} />
+                  <IconButton
+                    icon={Trash2}
+                    label={t('Konuyu sil', 'Delete topic')}
+                    className="size-8 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600"
+                    disabled={deleteTopic.isPending}
+                    onClick={() => confirmDeleteTopic(topic)}
+                  />
+                </div>
+
+                <div className="flex min-w-0 items-start gap-2">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <FolderTree className="size-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Link to={`/topics/${encodeURIComponent(topic.id)}`} className="min-w-0 truncate text-base font-semibold tracking-tight text-foreground hover:text-primary">
+                        {topic.name}
+                      </Link>
+                      <StatusPill tone={priorityTone[topic.priority]}>{priorityLabel(topic.priority)}</StatusPill>
                     </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <StatusPill tone={priorityTone[topic.priority]}>{priorityLabel(topic.priority)}</StatusPill>
-                    <IconButton icon={Pencil} label={t('Konuyu düzenle', 'Edit topic')} className="size-8" onClick={() => openEditTopic(topic)} />
-                    <IconButton
-                      icon={Trash2}
-                      label={t('Konuyu sil', 'Delete topic')}
-                      className="size-8 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600"
-                      disabled={deleteTopic.isPending}
-                      onClick={() => confirmDeleteTopic(topic)}
-                    />
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{topic.category}</p>
                   </div>
                 </div>
 
@@ -494,12 +642,26 @@ export default function TopicsPage() {
 
                     {childrenExpanded ? (
                       <div className="mt-2 space-y-2">
-                        {children.slice(0, 5).map((child) => (
+                        {children.map((child, childIndex) => (
                           <div key={child.id} className="flex items-center justify-between gap-2 rounded-xl bg-muted/45 px-3 py-2">
                             <Link to={`/topics/${encodeURIComponent(child.id)}`} className="min-w-0 text-xs font-medium text-foreground hover:text-primary">
                               <span className="truncate">{child.name}</span>
                             </Link>
                             <div className="flex shrink-0 items-center gap-1">
+                              <IconButton
+                                icon={ArrowUp}
+                                label={t('Alt konuyu yukarı taşı', 'Move subtopic up')}
+                                className="size-7 rounded-lg"
+                                disabled={childIndex === 0 || reorderTopics.isPending}
+                                onClick={() => moveTopic(children, child.id, -1, topic.id)}
+                              />
+                              <IconButton
+                                icon={ArrowDown}
+                                label={t('Alt konuyu aşağı taşı', 'Move subtopic down')}
+                                className="size-7 rounded-lg"
+                                disabled={childIndex >= children.length - 1 || reorderTopics.isPending}
+                                onClick={() => moveTopic(children, child.id, 1, topic.id)}
+                              />
                               <IconButton icon={Pencil} label={t('Alt konuyu düzenle', 'Edit subtopic')} className="size-7 rounded-lg" onClick={() => openEditTopic(child)} />
                               <IconButton
                                 icon={Trash2}
@@ -518,9 +680,6 @@ export default function TopicsPage() {
                             </div>
                           </div>
                         ))}
-                        {children.length > 5 ? (
-                          <p className="px-1 text-[11px] text-muted-foreground">+{children.length - 5} {t('alt konu daha', 'more subtopics')}</p>
-                        ) : null}
                       </div>
                     ) : null}
                   </div>
@@ -539,7 +698,10 @@ export default function TopicsPage() {
                 </div>
 
                 <div className="mt-5 flex items-center justify-between gap-2 border-t border-border/60 pt-4">
-                  <ActionButton icon={Plus} onClick={() => openQuickAdd(topic.id)}>{t('Soru ekle', 'Add question')}</ActionButton>
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <ActionButton icon={FolderTree} onClick={() => openCreateTopic(topic.id)}>{t('Alt konu', 'Subtopic')}</ActionButton>
+                    <ActionButton icon={Plus} onClick={() => openQuickAdd(topic.id)}>{t('Soru ekle', 'Add question')}</ActionButton>
+                  </div>
                   <Link
                     to={`/topics/${encodeURIComponent(topic.id)}`}
                     className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-primary bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
@@ -568,8 +730,20 @@ export default function TopicsPage() {
           <Panel className="w-full max-w-lg bg-card p-6" role="dialog" aria-modal="true" aria-labelledby="new-topic-title">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 id="new-topic-title" className="text-lg font-semibold text-foreground">{editingTopic ? t('Konuyu düzenle', 'Edit topic') : t('Konu ekle', 'Add topic')}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{editingTopic ? t('Ana konu veya alt konu bilgilerini güncelle.', 'Update topic or subtopic details.') : t('Ana konu veya mevcut bir konunun altında alt konu oluştur.', 'Create a main topic or a subtopic.')}</p>
+                <h2 id="new-topic-title" className="text-lg font-semibold text-foreground">
+                  {editingTopic
+                    ? t('Konuyu düzenle', 'Edit topic')
+                    : newTopic.parentTopicId
+                      ? t('Alt konu ekle', 'Add subtopic')
+                      : t('Konu ekle', 'Add topic')}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {editingTopic
+                    ? t('Ana konu veya alt konu bilgilerini güncelle.', 'Update topic or subtopic details.')
+                    : newTopic.parentTopicId
+                      ? t('Soru eklemeden sadece alt konu oluştur.', 'Create only a subtopic without adding a question.')
+                      : t('Ana konu veya mevcut bir konunun altında alt konu oluştur.', 'Create a main topic or a subtopic.')}
+                </p>
               </div>
               <IconButton icon={X} label={t('Pencereyi kapat', 'Close dialog')} onClick={() => { setCreateOpen(false); setEditingTopic(null) }} />
             </div>
@@ -640,6 +814,8 @@ export default function TopicsPage() {
               </div>
               <IconButton icon={X} label={t('Pencereyi kapat', 'Close dialog')} onClick={() => { setQuickAddOpen(false); if (quickAddRequested) setSearchParams({}) }} />
             </div>
+
+            <SmartQuestionPaste className="mt-5" onApply={applyImportedQuestion} />
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <label className="space-y-1.5 text-xs font-medium text-foreground">

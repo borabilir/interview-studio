@@ -12,6 +12,7 @@ public sealed record TopicDto(
     int ConfidenceLevel,
     int EstimatedMastery,
     string AccentColor,
+    int SortOrder,
     Guid? ParentTopicId,
     string? ParentTopicName,
     IReadOnlyList<string> Tags,
@@ -26,6 +27,7 @@ public sealed record CreateTopicRequest(
     int ConfidenceLevel,
     int EstimatedMastery,
     string? AccentColor,
+    int? SortOrder,
     Guid? ParentTopicId,
     IReadOnlyList<string>? Tags);
 
@@ -38,10 +40,12 @@ public sealed record UpdateTopicRequest(
     int ConfidenceLevel,
     int EstimatedMastery,
     string? AccentColor,
+    int? SortOrder,
     Guid? ParentTopicId,
     IReadOnlyList<string>? Tags);
 
 public sealed record UpdateTopicProgressRequest(int Progress, int ConfidenceLevel);
+public sealed record ReorderTopicsRequest(Guid? ParentTopicId, IReadOnlyList<Guid> TopicIds);
 
 public interface ITopicService
 {
@@ -50,5 +54,6 @@ public interface ITopicService
     Task<TopicDto> CreateAsync(CreateTopicRequest request, CancellationToken cancellationToken = default);
     Task<TopicDto> UpdateAsync(Guid id, UpdateTopicRequest request, CancellationToken cancellationToken = default);
     Task<TopicDto> UpdateProgressAsync(Guid id, UpdateTopicProgressRequest request, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TopicDto>> ReorderAsync(ReorderTopicsRequest request, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

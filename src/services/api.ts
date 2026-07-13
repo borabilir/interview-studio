@@ -59,6 +59,7 @@ export const api = {
     create: <T>(input: unknown) => request<T>('/api/topics', { method: 'POST', body: input }),
     update: <T>(id: string, input: unknown) =>
       request<T>(`/api/topics/${encodeURIComponent(id)}`, { method: 'PUT', body: input }),
+    reorder: <T>(input: unknown) => request<T>('/api/topics/reorder', { method: 'PATCH', body: input }),
     updateProgress: <T>(id: string, input: unknown) =>
       request<T>(`/api/topics/${encodeURIComponent(id)}/progress`, { method: 'PATCH', body: input }),
     remove: (id: string) => request<void>(`/api/topics/${encodeURIComponent(id)}`, { method: 'DELETE' }),

@@ -48,6 +48,14 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         CancellationToken cancellationToken) =>
         Ok(await topicService.UpdateProgressAsync(id, request, cancellationToken));
 
+    [HttpPatch("reorder")]
+    [ProducesResponseType<IReadOnlyList<TopicDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IReadOnlyList<TopicDto>>> Reorder(
+        [FromBody] ReorderTopicsRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await topicService.ReorderAsync(request, cancellationToken));
+
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

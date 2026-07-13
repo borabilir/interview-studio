@@ -40,10 +40,17 @@ import {
 import { MarkdownAnswer } from '../components/features/MarkdownAnswer'
 import { RichAnswerEditor } from '../components/features/RichAnswerEditor'
 import { FlashcardWhyEditorField, FlashcardWhySection } from '../components/features/FlashcardWhySection'
+import { SmartQuestionPaste } from '../components/features/SmartQuestionPaste'
 import { cn } from '../components/features/featureClassNames'
+import { useDebouncedValue } from '../hooks/use-debounced-value'
 import { useI18n } from '../i18n'
 import { api } from '../services/api'
 import { queryKeys } from '../services/queryKeys'
+import {
+  appendCodeBlocksToAnswer,
+  sameLooseName,
+  type ParsedFlashcardImport,
+} from '../utils/flashcardImport'
 import type { ApiDifficulty, FlashcardDto, TopicDto, UpsertFlashcardInput } from '../types/api'
 
 type ReviewRating = 'Again' | 'Hard' | 'Good' | 'Easy'
@@ -71,6 +78,12 @@ const emptyDraft: CardDraft = {
 
 const EMPTY_TOPICS: TopicDto[] = []
 const EMPTY_CARDS: FlashcardDto[] = []
+
+function compareTopics(locale: string) {
+  return (a: TopicDto, b: TopicDto) =>
+    a.sortOrder - b.sortOrder
+    || a.name.localeCompare(b.name, locale)
+}
 
 function difficultyTone(difficulty: ApiDifficulty) {
   return difficulty === 'Hard' ? 'danger' as const : difficulty === 'Medium' ? 'warning' as const : 'success' as const
@@ -111,6 +124,7 @@ export default function FlashcardsPage() {
   const linkedCardId = searchParams.get('id')
   const [mode, setMode] = useState<Mode>(linkedCardId ? 'browse' : 'simulate')
   const [query, setQuery] = useState(searchParams.get('q') ?? '')
+  const debouncedQuery = useDebouncedValue(query.trim(), 250)
   const [selectedRootId, setSelectedRootId] = useState('')
   const [selectedSubtopicId, setSelectedSubtopicId] = useState('')
   const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') ?? '')
@@ -139,7 +153,7 @@ export default function FlashcardsPage() {
 
   const topicById = useMemo(() => new Map(topics.map((topic) => [topic.id, topic])), [topics])
   const rootTopics = useMemo(
-    () => topics.filter((topic) => !topic.parentTopicId).sort((a, b) => a.name.localeCompare(b.name, locale)),
+    () => topics.filter((topic) => !topic.parentTopicId).sort(compareTopics(locale)),
     [locale, topics],
   )
   const childrenByParent = useMemo(() => {
@@ -150,7 +164,7 @@ export default function FlashcardsPage() {
       items.push(topic)
       map.set(topic.parentTopicId, items)
     }
-    for (const children of map.values()) children.sort((a, b) => a.name.localeCompare(b.name, locale))
+    for (const children of map.values()) children.sort(compareTopics(locale))
     return map
   }, [locale, topics])
 
@@ -191,7 +205,7 @@ export default function FlashcardsPage() {
   }, [cards, locale, topicScopeIds])
 
   const filteredCards = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase(locale)
+    const normalized = debouncedQuery.toLocaleLowerCase(locale)
     const now = Date.now()
     return cards
       .filter((card) => {
@@ -217,7 +231,7 @@ export default function FlashcardsPage() {
         new Date(b.createdAtUtc).getTime() - new Date(a.createdAtUtc).getTime()
         || a.question.localeCompare(b.question, locale),
       )
-  }, [cards, difficulty, dueOnly, linkedCardId, locale, query, selectedTag, topicScopeIds])
+  }, [cards, debouncedQuery, difficulty, dueOnly, linkedCardId, locale, selectedTag, topicScopeIds])
 
   const card = filteredCards.length ? filteredCards[index % filteredCards.length] : undefined
 
@@ -225,7 +239,7 @@ export default function FlashcardsPage() {
     setIndex(0)
     setFlipped(false)
     setSelfAnswer('')
-  }, [difficulty, dueOnly, effectiveTopicId, query, selectedTag])
+  }, [debouncedQuery, difficulty, dueOnly, effectiveTopicId, selectedTag])
 
   useEffect(() => {
     if (index >= filteredCards.length) setIndex(0)
@@ -344,6 +358,92 @@ export default function FlashcardsPage() {
       tags: item.tags,
     })
     setEditorOpen(true)
+  }
+
+  const applyImportedQuestion = (parsed: ParsedFlashcardImport) => {
+    const applied: string[] = []
+    const ignored: string[] = []
+    const next: CardDraft = { ...draft, insights: { ...draft.insights }, tags: [...draft.tags] }
+
+    if (parsed.topic) {
+      const root = rootTopics.find((topic) => sameLooseName(topic.name, parsed.topic!))
+      if (root) {
+        next.topicId = root.id
+        applied.push('Konu')
+      } else {
+        ignored.push(`Ana konu bulunamadı: ${parsed.topic}`)
+      }
+    }
+
+    if (parsed.subtopic) {
+      const rootId = next.topicId
+      const subtopic = rootId
+        ? (childrenByParent.get(rootId) ?? []).find((topic) => sameLooseName(topic.name, parsed.subtopic!))
+        : topics.find((topic) => topic.parentTopicId && sameLooseName(topic.name, parsed.subtopic!))
+
+      if (subtopic) {
+        next.topicId = subtopic.id
+        applied.push('Alt konu')
+      } else {
+        ignored.push(`Alt konu bulunamadı: ${parsed.subtopic}`)
+      }
+    }
+
+    if (parsed.question) {
+      next.question = parsed.question
+      applied.push('Soru')
+    }
+
+    if (parsed.answer || parsed.codeBlocks.length) {
+      next.answer = appendCodeBlocksToAnswer(parsed.answer ?? next.answer, parsed.codeBlocks)
+      applied.push(parsed.codeBlocks.length ? 'Cevap + Kod' : 'Cevap')
+    }
+
+    if (parsed.why) {
+      next.why = parsed.why
+      applied.push('Why')
+    }
+
+    if (parsed.productionExample) {
+      next.insights.productionExample = parsed.productionExample
+      applied.push('Production Example')
+    }
+
+    if (parsed.bankingExample) {
+      next.insights.bankingExample = parsed.bankingExample
+      applied.push('Banking Example')
+    }
+
+    if (parsed.interviewTip) {
+      next.insights.interviewTip = parsed.interviewTip
+      applied.push('Interview Tip')
+    }
+
+    if (parsed.interviewFrequency) {
+      next.insights.interviewFrequency = parsed.interviewFrequency
+      applied.push('Sorulma olasılığı')
+    }
+
+    if (parsed.difficulty) {
+      next.difficulty = parsed.difficulty
+      applied.push('Zorluk')
+    }
+
+    if (parsed.tags.length || parsed.questionType) {
+      const tags = [...parsed.tags]
+      if (parsed.questionType && !tags.some((tag) => sameLooseName(tag, parsed.questionType!))) {
+        tags.push(parsed.questionType.toLocaleLowerCase('tr-TR'))
+      }
+      next.tags = tags
+      applied.push(parsed.questionType ? 'Etiketler + Soru tipi' : 'Etiketler')
+    }
+
+    if (parsed.relatedQuestions) {
+      ignored.push('İlgili sorular için ayrı alan yok')
+    }
+
+    setDraft(next)
+    return { applied, ignored }
   }
 
   const clearFilters = () => {
@@ -675,6 +775,7 @@ export default function FlashcardsPage() {
               <h2 className="text-base font-semibold">{editingId ? t('Soruyu düzenle', 'Edit question') : t('Yeni soru', 'New question')}</h2>
               <button type="button" onClick={() => setEditorOpen(false)} className="grid size-8 place-items-center rounded-lg hover:bg-muted" aria-label={t('Pencereyi kapat', 'Close dialog')}><X className="size-4" /></button>
             </div>
+            <SmartQuestionPaste className="mt-5" onApply={applyImportedQuestion} />
             <label className="mt-5 block text-xs font-medium text-foreground">
               {t('Konu / alt konu', 'Topic / subtopic')}
               <select value={draft.topicId ?? ''} onChange={(event) => setDraft((value) => ({ ...value, topicId: event.target.value || null }))} className="mt-2 h-10 w-full rounded-xl border border-border bg-background px-3 text-sm">

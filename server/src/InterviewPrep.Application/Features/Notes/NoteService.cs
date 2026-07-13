@@ -96,21 +96,25 @@ internal sealed class NoteService(IUnitOfWork unitOfWork) : INoteService
             ChangeSummary = "İlk sürüm"
         });
 
-        var tagNames = NormalizeTags(request.Tags);
+        var tagNames = TagUtilities.NormalizeNames(request.Tags);
         if (tagNames.Count > 0)
         {
-            var existingTags = await unitOfWork.Repository<Tag>().ListTrackedAsync(
-                tag => tagNames.Contains(tag.Name), cancellationToken);
+            var tagSlugs = tagNames.Select(TagUtilities.Slugify).ToList();
+            var existingTags = (await unitOfWork.Repository<Tag>().ListTrackedAsync(
+                tag => tagNames.Contains(tag.Name) || tagSlugs.Contains(tag.Slug), cancellationToken)).ToList();
 
             foreach (var tagName in tagNames)
             {
+                var slug = TagUtilities.Slugify(tagName);
                 var tag = existingTags.FirstOrDefault(candidate =>
-                    string.Equals(candidate.Name, tagName, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(candidate.Name, tagName, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(candidate.Slug, slug, StringComparison.OrdinalIgnoreCase));
 
                 if (tag is null)
                 {
-                    tag = new Tag { Name = tagName, Slug = Slugify(tagName) };
+                    tag = new Tag { Name = tagName, Slug = slug };
                     await unitOfWork.Repository<Tag>().AddAsync(tag, cancellationToken);
+                    existingTags.Add(tag);
                 }
 
                 note.NoteTags.Add(new NoteTag { NoteId = note.Id, TagId = tag.Id });
@@ -186,7 +190,7 @@ internal sealed class NoteService(IUnitOfWork unitOfWork) : INoteService
         IReadOnlyList<string>? requestedTags,
         CancellationToken cancellationToken)
     {
-        var tagNames = NormalizeTags(requestedTags);
+        var tagNames = TagUtilities.NormalizeNames(requestedTags);
         var joins = await unitOfWork.Repository<NoteTag>().ListTrackedAsync(
             join => join.NoteId == note.Id,
             cancellationToken);
@@ -201,18 +205,22 @@ internal sealed class NoteService(IUnitOfWork unitOfWork) : INoteService
             return;
         }
 
-        var tags = await unitOfWork.Repository<Tag>().ListTrackedAsync(
-            tag => tagNames.Contains(tag.Name),
-            cancellationToken);
+        var tagSlugs = tagNames.Select(TagUtilities.Slugify).ToList();
+        var tags = (await unitOfWork.Repository<Tag>().ListTrackedAsync(
+            tag => tagNames.Contains(tag.Name) || tagSlugs.Contains(tag.Slug),
+            cancellationToken)).ToList();
 
         foreach (var tagName in tagNames)
         {
+            var slug = TagUtilities.Slugify(tagName);
             var tag = tags.FirstOrDefault(candidate =>
-                string.Equals(candidate.Name, tagName, StringComparison.OrdinalIgnoreCase));
+                string.Equals(candidate.Name, tagName, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(candidate.Slug, slug, StringComparison.OrdinalIgnoreCase));
             if (tag is null)
             {
-                tag = new Tag { Name = tagName, Slug = Slugify(tagName) };
+                tag = new Tag { Name = tagName, Slug = slug };
                 await unitOfWork.Repository<Tag>().AddAsync(tag, cancellationToken);
+                tags.Add(tag);
             }
 
             await unitOfWork.Repository<NoteTag>().AddAsync(
@@ -220,15 +228,6 @@ internal sealed class NoteService(IUnitOfWork unitOfWork) : INoteService
                 cancellationToken);
         }
     }
-
-    private static List<string> NormalizeTags(IReadOnlyList<string>? tags) =>
-        tags?.Where(tag => !string.IsNullOrWhiteSpace(tag))
-            .Select(tag => tag.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList() ?? [];
-
-    private static string Slugify(string value) =>
-        string.Join('-', value.Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

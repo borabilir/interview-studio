@@ -12,7 +12,11 @@ internal sealed class TopicService(IUnitOfWork unitOfWork) : ITopicService
         _topics.ListAsync(
             TopicProjection,
             topic => !topic.IsArchived,
-            topics => topics.OrderBy(topic => topic.ParentTopicId.HasValue).ThenBy(topic => topic.Name),
+            topics => topics
+                .OrderBy(topic => topic.ParentTopicId.HasValue)
+                .ThenBy(topic => topic.ParentTopicId)
+                .ThenBy(topic => topic.SortOrder)
+                .ThenBy(topic => topic.Name),
             cancellationToken: cancellationToken);
 
     public async Task<TopicDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -41,6 +45,8 @@ internal sealed class TopicService(IUnitOfWork unitOfWork) : ITopicService
             ConfidenceLevel = ClampScore(request.ConfidenceLevel),
             EstimatedMastery = ClampScore(request.EstimatedMastery),
             AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#6366F1" : request.AccentColor.Trim(),
+            SortOrder = NormalizeSortOrder(
+                request.SortOrder ?? await GetNextSortOrderAsync(request.ParentTopicId, cancellationToken)),
             ParentTopicId = request.ParentTopicId
         };
 
@@ -66,6 +72,7 @@ internal sealed class TopicService(IUnitOfWork unitOfWork) : ITopicService
             throw new NotFoundException(nameof(Topic), id);
         }
 
+        var parentChanged = topic.ParentTopicId != request.ParentTopicId;
         topic.Name = request.Name.Trim();
         topic.Category = request.Category.Trim();
         topic.Description = request.Description?.Trim() ?? string.Empty;
@@ -74,6 +81,8 @@ internal sealed class TopicService(IUnitOfWork unitOfWork) : ITopicService
         topic.ConfidenceLevel = ClampScore(request.ConfidenceLevel);
         topic.EstimatedMastery = ClampScore(request.EstimatedMastery);
         topic.AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#6366F1" : request.AccentColor.Trim();
+        topic.SortOrder = NormalizeSortOrder(request.SortOrder
+            ?? (parentChanged ? await GetNextSortOrderAsync(request.ParentTopicId, cancellationToken) : topic.SortOrder));
         topic.ParentTopicId = request.ParentTopicId;
 
         var joins = await unitOfWork.Repository<TopicTag>().ListTrackedAsync(
@@ -87,6 +96,40 @@ internal sealed class TopicService(IUnitOfWork unitOfWork) : ITopicService
         await AddTagsAsync(topic.Id, request.Tags, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return await GetByIdAsync(topic.Id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TopicDto>> ReorderAsync(
+        ReorderTopicsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (request.TopicIds is null)
+        {
+            throw new ArgumentException("Sıralama listesi boş olamaz.", nameof(request));
+        }
+
+        var topics = (await _topics.ListTrackedAsync(
+            topic => !topic.IsArchived && topic.ParentTopicId == request.ParentTopicId,
+            cancellationToken)).ToList();
+
+        if (request.TopicIds.Count != topics.Count || request.TopicIds.Distinct().Count() != topics.Count)
+        {
+            throw new ArgumentException("Sıralama listesi bu seviyedeki tüm konuları içermelidir.", nameof(request));
+        }
+
+        var byId = topics.ToDictionary(topic => topic.Id);
+        for (var index = 0; index < request.TopicIds.Count; index++)
+        {
+            var topicId = request.TopicIds[index];
+            if (!byId.TryGetValue(topicId, out var topic))
+            {
+                throw new ArgumentException("Sıralama listesi bu seviyedeki tüm konuları içermelidir.", nameof(request));
+            }
+
+            topic.SortOrder = index;
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return await GetAllAsync(cancellationToken);
     }
 
     public async Task<TopicDto> UpdateProgressAsync(
@@ -192,12 +235,24 @@ internal sealed class TopicService(IUnitOfWork unitOfWork) : ITopicService
             topic.ConfidenceLevel,
             topic.EstimatedMastery,
             topic.AccentColor,
+            topic.SortOrder,
             topic.ParentTopicId,
             topic.ParentTopic == null ? null : topic.ParentTopic.Name,
             topic.TopicTags.OrderBy(topicTag => topicTag.Tag.Name).Select(topicTag => topicTag.Tag.Name).ToList(),
             topic.UpdatedAtUtc);
 
     private static int ClampScore(int score) => Math.Clamp(score, 0, 100);
+
+    private static int NormalizeSortOrder(int sortOrder) => Math.Max(0, sortOrder);
+
+    private async Task<int> GetNextSortOrderAsync(Guid? parentTopicId, CancellationToken cancellationToken)
+    {
+        var siblings = await _topics.ListTrackedAsync(
+            topic => !topic.IsArchived && topic.ParentTopicId == parentTopicId,
+            cancellationToken);
+
+        return siblings.Count == 0 ? 0 : siblings.Max(topic => topic.SortOrder) + 1;
+    }
 
     private async Task EnsureValidParentAsync(Guid? topicId, Guid? parentTopicId, CancellationToken cancellationToken)
     {
@@ -235,24 +290,28 @@ internal sealed class TopicService(IUnitOfWork unitOfWork) : ITopicService
         IReadOnlyList<string>? requestedTags,
         CancellationToken cancellationToken)
     {
-        var tagNames = NormalizeTags(requestedTags);
+        var tagNames = TagUtilities.NormalizeNames(requestedTags);
         if (tagNames.Count == 0)
         {
             return;
         }
 
-        var existingTags = await unitOfWork.Repository<Tag>().ListTrackedAsync(
-            tag => tagNames.Contains(tag.Name), cancellationToken);
+        var tagSlugs = tagNames.Select(TagUtilities.Slugify).ToList();
+        var existingTags = (await unitOfWork.Repository<Tag>().ListTrackedAsync(
+            tag => tagNames.Contains(tag.Name) || tagSlugs.Contains(tag.Slug), cancellationToken)).ToList();
 
         foreach (var tagName in tagNames)
         {
+            var slug = TagUtilities.Slugify(tagName);
             var tag = existingTags.FirstOrDefault(candidate =>
-                string.Equals(candidate.Name, tagName, StringComparison.OrdinalIgnoreCase));
+                string.Equals(candidate.Name, tagName, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(candidate.Slug, slug, StringComparison.OrdinalIgnoreCase));
 
             if (tag is null)
             {
-                tag = new Tag { Name = tagName, Slug = Slugify(tagName) };
+                tag = new Tag { Name = tagName, Slug = slug };
                 await unitOfWork.Repository<Tag>().AddAsync(tag, cancellationToken);
+                existingTags.Add(tag);
             }
 
             await unitOfWork.Repository<TopicTag>().AddAsync(
@@ -261,12 +320,4 @@ internal sealed class TopicService(IUnitOfWork unitOfWork) : ITopicService
         }
     }
 
-    private static List<string> NormalizeTags(IReadOnlyList<string>? tags) =>
-        tags?.Where(tag => !string.IsNullOrWhiteSpace(tag))
-            .Select(tag => tag.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList() ?? [];
-
-    private static string Slugify(string value) =>
-        string.Join('-', value.Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
 }

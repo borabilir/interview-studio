@@ -185,29 +185,32 @@ internal sealed class FlashcardService(IUnitOfWork unitOfWork) : IFlashcardServi
         IReadOnlyList<string>? requestedTags,
         CancellationToken cancellationToken)
     {
-        var names = requestedTags?.Where(value => !string.IsNullOrWhiteSpace(value))
-            .Select(value => value.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList() ?? [];
+        var names = TagUtilities.NormalizeNames(requestedTags);
         if (names.Count == 0)
         {
             return;
         }
 
-        var existing = await unitOfWork.Repository<Tag>().ListTrackedAsync(
-            tag => names.Contains(tag.Name),
-            cancellationToken);
+        var slugs = names.Select(TagUtilities.Slugify).ToList();
+        var existing = (await unitOfWork.Repository<Tag>().ListTrackedAsync(
+            tag => names.Contains(tag.Name) || slugs.Contains(tag.Slug),
+            cancellationToken)).ToList();
         foreach (var name in names)
         {
-            var tag = existing.FirstOrDefault(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase));
+            var slug = TagUtilities.Slugify(name);
+            var tag = existing.FirstOrDefault(item =>
+                string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(item.Slug, slug, StringComparison.OrdinalIgnoreCase));
+
             if (tag is null)
             {
                 tag = new Tag
                 {
                     Name = name,
-                    Slug = string.Join('-', name.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                    Slug = slug
                 };
                 await unitOfWork.Repository<Tag>().AddAsync(tag, cancellationToken);
+                existing.Add(tag);
             }
 
             await unitOfWork.Repository<FlashcardTag>().AddAsync(

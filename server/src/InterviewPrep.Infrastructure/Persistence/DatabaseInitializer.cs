@@ -60,6 +60,10 @@ internal static class DatabaseInitializer
             CreateTopic("Agile", "Çalışma Biçimi", Priority.Medium, 81, 75, "#F59E0B"),
             CreateTopic("Security", "Mimari", Priority.High, 38, 40, "#F43F5E")
         };
+        for (var index = 0; index < topics.Length; index++)
+        {
+            topics[index].SortOrder = index;
+        }
 
         var topicByName = topics.ToDictionary(topic => topic.Name);
         var tags = new[]

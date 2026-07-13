@@ -108,6 +108,7 @@ export default function SystemDesignPage() {
   const [critiqueOpen, setCritiqueOpen] = useState(true);
   const [scenarioListOpen, setScenarioListOpen] = useState(() => window.innerWidth >= 1024);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search.trim(), 250);
   const [draft, setDraft] = useState<SystemDesignScenarioDto | null>(null);
   const [dirty, setDirty] = useState(false);
   const lastSubmitted = useRef("");
@@ -292,10 +293,10 @@ export default function SystemDesignPage() {
   }, [linkedScenarioId, scenarios, selectScenario, selectedId]);
 
   const visibleScenarios = useMemo(() => {
-    const normalized = search.trim().toLocaleLowerCase(locale);
+    const normalized = debouncedSearch.toLocaleLowerCase(locale);
     if (!normalized) return scenarios;
     return scenarios.filter((scenario) => [scenario.title, scenario.problem, scenario.topicName ?? "", ...scenario.tags].some((value) => value.toLocaleLowerCase(locale).includes(normalized)));
-  }, [locale, scenarios, search]);
+  }, [debouncedSearch, locale, scenarios]);
 
   const patchDraft = <K extends keyof SystemDesignScenarioDto>(key: K, value: SystemDesignScenarioDto[K]) => {
     failedFingerprint.current = "";

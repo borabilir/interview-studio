@@ -13,6 +13,7 @@ public sealed class Topic : BaseEntity
     public int ConfidenceLevel { get; set; }
     public int EstimatedMastery { get; set; }
     public string AccentColor { get; set; } = "#6366F1";
+    public int SortOrder { get; set; }
     public bool IsArchived { get; set; }
     public Guid? ParentTopicId { get; set; }
     public Topic? ParentTopic { get; set; }

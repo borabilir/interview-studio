@@ -12,6 +12,7 @@ import {
   Search,
   Sun,
   X,
+  type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -29,6 +30,14 @@ const navigation = [
   { tr: 'Konular', en: 'Topics', to: '/topics', icon: Layers3 },
   { tr: 'Pratik', en: 'Practice', to: '/flashcards', icon: CreditCard },
 ]
+
+type CommandResultItem = {
+  label: string
+  description?: string | null
+  to: string
+  icon: LucideIcon
+  hint: string
+}
 
 function AppMark({ compact = false }: { compact?: boolean }) {
   return (
@@ -161,11 +170,11 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
   })
 
   const results = useMemo(() => {
-    const staticItems = [
+    const staticItems: CommandResultItem[] = [
       { label: t('Hızlı soru ekle', 'Quick add question'), to: '/topics?quickAdd=1', icon: Plus, hint: t('Ekle', 'Add') },
       ...navigation.map((item) => ({ label: t(item.tr, item.en), to: item.to, icon: item.icon, hint: t('Git', 'Navigate') })),
     ]
-    const iconByKind: Record<string, typeof Layers3> = {
+    const iconByKind: Record<string, LucideIcon> = {
       Topic: Layers3,
       Flashcard: CreditCard,
     }
@@ -173,18 +182,20 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
       Topic: t('Konu', 'Topic'),
       Flashcard: t('Soru', 'Question'),
     }
-    const workspaceItems = searchResults
+    const workspaceItems: CommandResultItem[] = searchResults
       .filter((result) => result.kind === 'Topic' || result.kind === 'Flashcard')
       .map((result) => ({
+        id: result.id,
         label: result.title,
+        description: result.description,
         to: result.path,
         icon: iconByKind[result.kind] ?? Search,
         hint: hintByKind[result.kind] ?? result.kind,
       }))
-    const normalized = query.toLowerCase().trim()
-    return [...staticItems, ...workspaceItems]
+    const normalized = query.toLocaleLowerCase().trim()
+    const staticMatches = staticItems
       .filter((item) => item.label.toLowerCase().includes(normalized))
-      .slice(0, 10)
+    return [...workspaceItems, ...staticMatches].slice(0, 10)
   }, [query, searchResults, t])
 
   useEffect(() => {
@@ -238,7 +249,7 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
               </p>
               {results.map((item) => (
                 <button
-                  key={`${item.label}-${item.hint}`}
+                  key={`${item.to}-${item.label}-${item.hint}`}
                   onClick={() => {
                     navigate(item.to)
                     onClose()
@@ -248,7 +259,12 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
                   <span className="grid h-8 w-8 place-items-center rounded-lg border bg-panel text-muted group-hover:text-ink">
                     <item.icon className="h-4 w-4" />
                   </span>
-                  <span className="flex-1 text-sm font-medium">{item.label}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{item.label}</span>
+                    {item.description ? (
+                      <span className="mt-0.5 block truncate text-xs text-muted">{item.description}</span>
+                    ) : null}
+                  </span>
                   <span className="text-xs text-muted">{item.hint}</span>
                 </button>
               ))}

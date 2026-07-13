@@ -113,30 +113,35 @@ internal sealed class SystemDesignScenarioService(IUnitOfWork unitOfWork) : ISys
 
     private async Task AddTagsAsync(Guid scenarioId, IReadOnlyList<string>? requestedTags, CancellationToken cancellationToken)
     {
-        var names = requestedTags?.Where(value => !string.IsNullOrWhiteSpace(value))
-            .Select(value => value.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList() ?? [];
+        var names = TagUtilities.NormalizeNames(requestedTags);
         if (names.Count == 0)
         {
             return;
         }
 
-        var tags = await unitOfWork.Repository<Tag>().ListTrackedAsync(
-            tag => names.Contains(tag.Name),
-            cancellationToken);
+        var slugs = names.Select(TagUtilities.Slugify).ToList();
+        var tags = (await unitOfWork.Repository<Tag>().ListTrackedAsync(
+            tag => names.Contains(tag.Name) || slugs.Contains(tag.Slug),
+            cancellationToken)).ToList();
+
         foreach (var name in names)
         {
-            var tag = tags.FirstOrDefault(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase));
+            var slug = TagUtilities.Slugify(name);
+            var tag = tags.FirstOrDefault(item =>
+                string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(item.Slug, slug, StringComparison.OrdinalIgnoreCase));
+
             if (tag is null)
             {
                 tag = new Tag
                 {
                     Name = name,
-                    Slug = string.Join('-', name.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                    Slug = slug
                 };
                 await unitOfWork.Repository<Tag>().AddAsync(tag, cancellationToken);
+                tags.Add(tag);
             }
+
             await unitOfWork.Repository<SystemDesignScenarioTag>().AddAsync(
                 new SystemDesignScenarioTag { SystemDesignScenarioId = scenarioId, TagId = tag.Id },
                 cancellationToken);
