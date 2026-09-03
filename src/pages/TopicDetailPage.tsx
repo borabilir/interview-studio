@@ -33,6 +33,7 @@ import {
   FlashcardInsightFields,
 } from '../components/features/FlashcardInsightFields'
 import { SmartQuestionPaste } from '../components/features/SmartQuestionPaste'
+import { Select } from '../components/ui/Select'
 import {
   emptyFlashcardInsights,
   interviewFrequencyLabel,
@@ -162,7 +163,7 @@ function rankCardsBySearch(cards: FlashcardDto[], term: string, locale: string) 
     .sort((a, b) =>
       b.primaryScore - a.primaryScore
       || b.score - a.score
-      || new Date(b.card.createdAtUtc).getTime() - new Date(a.card.createdAtUtc).getTime()
+      || new Date(a.card.createdAtUtc).getTime() - new Date(b.card.createdAtUtc).getTime()
       || a.card.question.localeCompare(b.card.question, locale),
     )
     .map((item) => item.card)
@@ -332,7 +333,7 @@ export default function TopicDetailPage() {
     }
     for (const items of map.values()) {
       items.sort((a, b) =>
-        new Date(b.createdAtUtc).getTime() - new Date(a.createdAtUtc).getTime()
+        new Date(a.createdAtUtc).getTime() - new Date(b.createdAtUtc).getTime()
         || a.question.localeCompare(b.question, locale),
       )
     }
@@ -1177,7 +1178,7 @@ export default function TopicDetailPage() {
               <div className="grid gap-4 sm:grid-cols-[1fr_170px]">
                 <label className="space-y-1.5 text-xs font-medium text-foreground">
                   {t('Bağlanacağı başlık', 'Attach to')}
-                  <select
+                  <Select
                     value={draft.topicId}
                     onChange={(event) => setDraft((current) => ({ ...current, topicId: event.target.value, newSubtopic: '' }))}
                     className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/30"
@@ -1190,11 +1191,11 @@ export default function TopicDetailPage() {
                         ))}
                       </optgroup>
                     ))}
-                  </select>
+                  </Select>
                 </label>
                 <label className="space-y-1.5 text-xs font-medium text-foreground">
                   {t('Zorluk', 'Difficulty')}
-                  <select
+                  <Select
                     value={draft.difficulty}
                     onChange={(event) => setDraft((current) => ({ ...current, difficulty: event.target.value as ApiDifficulty }))}
                     className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/30"
@@ -1202,7 +1203,7 @@ export default function TopicDetailPage() {
                     <option value="Easy">{difficultyLabel('Easy')}</option>
                     <option value="Medium">{difficultyLabel('Medium')}</option>
                     <option value="Hard">{difficultyLabel('Hard')}</option>
-                  </select>
+                  </Select>
                 </label>
               </div>
 
@@ -1356,7 +1357,7 @@ export default function TopicDetailPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-1.5 text-xs font-medium text-foreground">
                   {t('Öncelik', 'Priority')}
-                  <select
+                  <Select
                     value={topicDraft.priority}
                     onChange={(event) => setTopicDraft((current) => ({ ...current, priority: event.target.value as ApiPriority }))}
                     className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none"
@@ -1365,7 +1366,7 @@ export default function TopicDetailPage() {
                     <option value="High">{t('Yüksek', 'High')}</option>
                     <option value="Medium">{t('Orta', 'Medium')}</option>
                     <option value="Low">{t('Düşük', 'Low')}</option>
-                  </select>
+                  </Select>
                 </label>
                 <label className="space-y-1.5 text-xs font-medium text-foreground">
                   {t('Renk', 'Color')}

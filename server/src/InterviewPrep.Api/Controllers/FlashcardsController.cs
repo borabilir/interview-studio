@@ -36,6 +36,20 @@ public sealed class FlashcardsController(IFlashcardService service) : Controller
         CancellationToken cancellationToken) =>
         Ok(await service.UpdateAsync(id, request, cancellationToken));
 
+    [HttpPatch("{id:guid}/note")]
+    public async Task<ActionResult<FlashcardDto>> UpdateNote(
+        Guid id,
+        [FromBody] UpdateFlashcardNoteRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await service.UpdateNoteAsync(id, request, cancellationToken));
+
+    [HttpPatch("{id:guid}/confidence")]
+    public async Task<ActionResult<FlashcardDto>> UpdateConfidence(
+        Guid id,
+        [FromBody] UpdateFlashcardConfidenceRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await service.UpdateConfidenceAsync(id, request, cancellationToken));
+
     [HttpPost("{id:guid}/review")]
     public async Task<ActionResult<FlashcardDto>> Review(
         Guid id,

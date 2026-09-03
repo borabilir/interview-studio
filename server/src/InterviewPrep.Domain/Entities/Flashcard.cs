@@ -7,6 +7,8 @@ public sealed class Flashcard : BaseEntity
 {
     public string Question { get; set; } = string.Empty;
     public string Answer { get; set; } = string.Empty;
+    public string? PersonalNote { get; set; }
+    public int Confidence { get; set; }
     public string? Why { get; set; }
     public string? ProductionExample { get; set; }
     public string? BankingExample { get; set; }

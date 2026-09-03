@@ -25,6 +25,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Progress } from '../components/ui/Progress'
+import { Select } from '../components/ui/Select'
 import { cn } from '../lib/cn'
 import { api } from '../services/api'
 import { useI18n } from '../i18n'
@@ -264,7 +265,7 @@ function ConfidenceChart({ value, history }: { value: number; history: ProgressP
           <p className="eyebrow">{t('Özgüven', 'Confidence')}</p>
           <div className="mt-2 flex items-end gap-2"><strong className="text-3xl font-semibold tracking-[-0.055em]">{Math.round(value)}%</strong><span className="mb-1 flex items-center text-[10px] font-semibold text-success"><TrendingUp className="mr-0.5 h-3 w-3" /> {t('Güncel', 'Live')}</span></div>
         </div>
-        <select value={periodWeeks} onChange={(event) => setPeriodWeeks(Number(event.target.value) as 6 | 12)} aria-label={t('Özgüven dönemi', 'Confidence period')} className="focus-ring rounded-lg border bg-canvas px-2 py-1 text-[10px] text-muted"><option value={6}>{t('6 hafta', '6 weeks')}</option><option value={12}>{t('12 hafta', '12 weeks')}</option></select>
+        <Select value={periodWeeks} onChange={(event) => setPeriodWeeks(Number(event.target.value) as 6 | 12)} aria-label={t('Özgüven dönemi', 'Confidence period')} className="focus-ring h-7 w-auto min-w-24 rounded-lg border bg-canvas px-2 py-1 text-[10px] text-muted"><option value={6}>{t('6 hafta', '6 weeks')}</option><option value={12}>{t('12 hafta', '12 weeks')}</option></Select>
       </div>
       {chartPoints.length ? <><div className="relative mt-auto h-[110px] w-full pt-4">
         <div className="absolute inset-x-0 top-[34px] border-t border-dashed" />

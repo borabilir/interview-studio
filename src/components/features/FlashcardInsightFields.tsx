@@ -7,6 +7,7 @@ import {
 import type { ReactNode } from 'react'
 import type { ApiInterviewFrequency } from '../../types/api'
 import { useI18n } from '../../i18n'
+import { Select } from '../ui/Select'
 import { cn } from './featureClassNames'
 import { MarkdownAnswer } from './MarkdownAnswer'
 import type { FlashcardInsightDraft, FlashcardInsightSource } from './flashcardInsightModel'
@@ -126,7 +127,7 @@ export function FlashcardInsightEditorFields({
 
         <label className="space-y-1.5 text-xs font-medium text-foreground">
           {t('Mülakatta Sorulma Olasılığı', 'Interview frequency')}
-          <select
+          <Select
             value={value.interviewFrequency}
             onChange={(event) => update({ interviewFrequency: event.target.value as ApiInterviewFrequency | '' })}
             className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/30"
@@ -136,7 +137,7 @@ export function FlashcardInsightEditorFields({
             <option value="Medium">{t('Orta', 'Medium')}</option>
             <option value="High">{t('Yüksek', 'High')}</option>
             <option value="VeryHigh">{t('Çok yüksek', 'Very high')}</option>
-          </select>
+          </Select>
         </label>
       </div>
     </section>

@@ -6,6 +6,8 @@ import { useI18n } from './i18n'
 const TopicsPage = lazy(() => import('./pages/TopicsPage'))
 const TopicDetailPage = lazy(() => import('./pages/TopicDetailPage'))
 const FlashcardsPage = lazy(() => import('./pages/FlashcardsPage'))
+const EasyModePage = lazy(() => import('./pages/EasyModePage'))
+const ShortNotesPage = lazy(() => import('./pages/ShortNotesPage'))
 
 function PageLoader() {
   const { t } = useI18n()
@@ -33,11 +35,13 @@ function LazyPage({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Routes>
+      <Route path="easy-mode" element={<LazyPage><EasyModePage /></LazyPage>} />
       <Route element={<AppShell />}>
         <Route index element={<Navigate to="/topics" replace />} />
         <Route path="topics" element={<LazyPage><TopicsPage /></LazyPage>} />
         <Route path="topics/:topicId" element={<LazyPage><TopicDetailPage /></LazyPage>} />
         <Route path="flashcards" element={<LazyPage><FlashcardsPage /></LazyPage>} />
+        <Route path="short-notes" element={<LazyPage><ShortNotesPage /></LazyPage>} />
         <Route path="*" element={<Navigate to="/topics" replace />} />
       </Route>
     </Routes>

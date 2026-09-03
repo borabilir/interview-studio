@@ -164,6 +164,37 @@ internal sealed class FlashcardService(IUnitOfWork unitOfWork) : IFlashcardServi
         return await GetByIdAsync(card.Id, cancellationToken);
     }
 
+    public async Task<FlashcardDto> UpdateNoteAsync(
+        Guid id,
+        UpdateFlashcardNoteRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var card = await _flashcards.GetByIdAsync(id, cancellationToken)
+            ?? throw new NotFoundException(nameof(Flashcard), id);
+
+        card.PersonalNote = NormalizeOptional(request.PersonalNote);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return await GetByIdAsync(id, cancellationToken);
+    }
+
+    public async Task<FlashcardDto> UpdateConfidenceAsync(
+        Guid id,
+        UpdateFlashcardConfidenceRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (request.Confidence is < 1 or > 4)
+        {
+            throw new ArgumentOutOfRangeException(nameof(request), "Güven seviyesi 1 ile 4 arasında olmalıdır.");
+        }
+
+        var card = await _flashcards.GetByIdAsync(id, cancellationToken)
+            ?? throw new NotFoundException(nameof(Flashcard), id);
+
+        card.Confidence = request.Confidence;
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return await GetByIdAsync(id, cancellationToken);
+    }
+
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var card = await _flashcards.GetByIdAsync(id, cancellationToken)
@@ -235,6 +266,8 @@ internal sealed class FlashcardService(IUnitOfWork unitOfWork) : IFlashcardServi
         card.Id,
         card.Question,
         card.Answer,
+        card.PersonalNote,
+        card.Confidence,
         card.Why,
         card.ProductionExample,
         card.BankingExample,

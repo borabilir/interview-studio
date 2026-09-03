@@ -91,6 +91,10 @@ export const api = {
     create: <T>(input: unknown) => request<T>('/api/flashcards', { method: 'POST', body: input }),
     update: <T>(id: string, input: unknown) =>
       request<T>(`/api/flashcards/${encodeURIComponent(id)}`, { method: 'PUT', body: input }),
+    updateNote: <T>(id: string, input: unknown) =>
+      request<T>(`/api/flashcards/${encodeURIComponent(id)}/note`, { method: 'PATCH', body: input }),
+    updateConfidence: <T>(id: string, input: unknown) =>
+      request<T>(`/api/flashcards/${encodeURIComponent(id)}/confidence`, { method: 'PATCH', body: input }),
     remove: (id: string) => request<void>(`/api/flashcards/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     review: <T>(id: string, input: unknown) =>
       request<T>(`/api/flashcards/${encodeURIComponent(id)}/review`, { method: 'POST', body: input }),
@@ -136,5 +140,60 @@ export const api = {
         { method: 'POST' },
       ),
   },
+  projectDocuments: {
+    list: <T>() => request<T>('/api/project-documents'),
+  },
   search: <T>(query: string) => request<T>(`/api/search${queryString({ q: query })}`),
+  ai: {
+    streamInterviewAnswer: async (
+      query: string,
+      section: string,
+      projectId: string | null,
+      onChunk: (chunk: string) => void,
+      signal?: AbortSignal,
+      previousAnswer?: string,
+      followUpQuestion?: string,
+    ) => {
+      const response = await fetch(`${API_URL}/api/ai/interview-answer/stream`, {
+        method: 'POST',
+        headers: {
+          Accept: 'text/event-stream',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query, section, projectId, previousAnswer, followUpQuestion }),
+        signal,
+      })
+
+      if (!response.ok || !response.body) {
+        const details = await response.json().catch(() => undefined)
+        const problem = details as { detail?: string; title?: string; error?: string } | undefined
+        throw new ApiError(
+          problem?.detail ?? problem?.title ?? problem?.error ?? `Request failed with status ${response.status}`,
+          response.status,
+          details,
+        )
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const events = buffer.split('\n\n')
+        buffer = events.pop() ?? ''
+
+        for (const event of events) {
+          const dataLine = event.split('\n').find((line) => line.startsWith('data: '))
+          if (!dataLine) continue
+          const data = dataLine.slice(6)
+          if (data === '{}') continue
+          onChunk(JSON.parse(data) as string)
+        }
+      }
+    },
+  },
 }

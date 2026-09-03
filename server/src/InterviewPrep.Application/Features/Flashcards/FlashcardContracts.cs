@@ -14,6 +14,8 @@ public sealed record FlashcardDto(
     Guid Id,
     string Question,
     string Answer,
+    string? PersonalNote,
+    int Confidence,
     string? Why,
     string? ProductionExample,
     string? BankingExample,
@@ -62,6 +64,8 @@ public sealed class UpdateFlashcardRequest
 }
 
 public sealed record ReviewFlashcardRequest(FlashcardReviewRating Rating);
+public sealed record UpdateFlashcardNoteRequest(string? PersonalNote);
+public sealed record UpdateFlashcardConfidenceRequest(int Confidence);
 
 public interface IFlashcardService
 {
@@ -75,6 +79,8 @@ public interface IFlashcardService
     Task<FlashcardDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<FlashcardDto> CreateAsync(CreateFlashcardRequest request, CancellationToken cancellationToken = default);
     Task<FlashcardDto> UpdateAsync(Guid id, UpdateFlashcardRequest request, CancellationToken cancellationToken = default);
+    Task<FlashcardDto> UpdateNoteAsync(Guid id, UpdateFlashcardNoteRequest request, CancellationToken cancellationToken = default);
+    Task<FlashcardDto> UpdateConfidenceAsync(Guid id, UpdateFlashcardConfidenceRequest request, CancellationToken cancellationToken = default);
     Task<FlashcardDto> ReviewAsync(Guid id, ReviewFlashcardRequest request, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

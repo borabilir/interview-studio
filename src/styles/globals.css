@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 :root {
   --canvas: 244 243 239;
   --panel: 252 251 248;
@@ -163,6 +170,11 @@ a {
 
   .markdown-answer th {
     @apply bg-muted/60 font-semibold text-foreground;
+  }
+
+  .easy-mode-page,
+  .easy-mode-page * {
+    cursor: default;
   }
 }
 

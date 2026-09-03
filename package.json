@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "main": "desktop/main.cjs",
   "scripts": {
     "dev": "vite",
     "dev:api": "dotnet run --project server/src/InterviewPrep.Api",
@@ -10,7 +11,9 @@
     "build:api": "dotnet build server/InterviewPrep.sln --no-restore",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "typecheck": "tsc -b --pretty false"
+    "typecheck": "tsc -b --pretty false",
+    "desktop:dev": "npm run build && electron .",
+    "desktop:package": "npm run build && electron-builder --mac --arm64 --config.directories.output=desktop/release"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
@@ -23,18 +26,20 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.1",
-    "remark-gfm": "^4.0.0",
     "react-router-dom": "^6.28.0",
+    "remark-gfm": "^4.0.0",
     "shiki": "^1.24.0",
     "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@types/node": "^22.10.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@types/node": "^22.10.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "electron": "^43.1.1",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.15.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
@@ -47,5 +52,25 @@
   },
   "overrides": {
     "dompurify": "3.4.11"
+  },
+  "build": {
+    "appId": "com.interviewstudio.easynotes",
+    "productName": "Interview Studio Notes",
+    "asar": true,
+    "files": [
+      "dist/**/*",
+      "desktop/main.cjs",
+      "desktop/after-pack.cjs",
+      "package.json"
+    ],
+    "afterPack": "desktop/after-pack.cjs",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    }
   }
 }

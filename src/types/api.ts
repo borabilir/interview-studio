@@ -185,6 +185,8 @@ export interface FlashcardDto {
   id: string
   question: string
   answer: string
+  personalNote?: string | null
+  confidence: number
   why?: string | null
   productionExample?: string | null
   bankingExample?: string | null

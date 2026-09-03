@@ -11,14 +11,21 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
-var dataDirectory = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
+var dataDirectory = builder.Configuration["DataDirectory"]
+    ?? Environment.GetEnvironmentVariable("INTERVIEW_STUDIO_DATA_DIR")
+    ?? Path.Combine(builder.Environment.ContentRootPath, "App_Data");
 Directory.CreateDirectory(dataDirectory);
 var databasePath = Path.Combine(dataDirectory, "interview-prep.db");
 var connectionString = builder.Configuration.GetConnectionString("InterviewPrep")
     ?? $"Data Source={databasePath}";
+var projectDocumentsDirectory = !string.IsNullOrWhiteSpace(builder.Configuration["ProjectDocuments:Directory"])
+    ? builder.Configuration["ProjectDocuments:Directory"]!
+    : Path.Combine(builder.Environment.ContentRootPath, "App_Data", "project-docs");
+Directory.CreateDirectory(projectDocumentsDirectory);
+builder.Configuration["ProjectDocuments:Directory"] = projectDocumentsDirectory;
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(connectionString);
+builder.Services.AddInfrastructure(connectionString, builder.Configuration);
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddControllers().AddJsonOptions(options =>

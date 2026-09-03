@@ -10,6 +10,7 @@ import {
   Moon,
   Plus,
   Search,
+  StickyNote,
   Sun,
   X,
   type LucideIcon,
@@ -29,6 +30,7 @@ import type { SearchResultDto } from '../../types/api'
 const navigation = [
   { tr: 'Konular', en: 'Topics', to: '/topics', icon: Layers3 },
   { tr: 'Pratik', en: 'Practice', to: '/flashcards', icon: CreditCard },
+  { tr: 'Kısa Notlar', en: 'Short Notes', to: '/short-notes', icon: StickyNote },
 ]
 
 type CommandResultItem = {
@@ -294,7 +296,9 @@ export function AppShell() {
   const location = useLocation()
   useAppearance()
 
-  const page = location.pathname.startsWith('/flashcards')
+  const page = location.pathname.startsWith('/short-notes')
+    ? { title: t('Kısa Notlar', 'Short Notes'), eyebrow: t('Hızlı çalışma alanı', 'Quick study workspace') }
+    : location.pathname.startsWith('/flashcards')
     ? { title: t('Pratik', 'Practice'), eyebrow: t('Mülakat simülasyonu', 'Interview simulation') }
     : location.pathname.startsWith('/topics/')
       ? { title: t('Konu', 'Topic'), eyebrow: t('Soru-cevap çalışma alanı', 'Question workspace') }

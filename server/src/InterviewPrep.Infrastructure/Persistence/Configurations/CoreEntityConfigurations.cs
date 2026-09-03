@@ -100,6 +100,8 @@ internal sealed class FlashcardConfiguration : BaseEntityConfiguration<Flashcard
         base.Configure(builder);
         builder.Property(card => card.Question).HasMaxLength(1000).IsRequired();
         builder.Property(card => card.Answer).IsRequired();
+        builder.Property(card => card.PersonalNote).HasMaxLength(1000);
+        builder.Property(card => card.Confidence).HasDefaultValue(0);
         builder.Property(card => card.Why).HasMaxLength(4000);
         builder.Property(card => card.ProductionExample).HasMaxLength(4000);
         builder.Property(card => card.BankingExample).HasMaxLength(4000);

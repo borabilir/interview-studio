@@ -199,6 +199,11 @@ namespace InterviewPrep.Infrastructure.Persistence.Migrations
                     b.Property<int>("CorrectReviewCount")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("Confidence")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("TEXT");
 
@@ -225,6 +230,10 @@ namespace InterviewPrep.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("NextReviewAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PersonalNote")
+                        .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ProductionExample")

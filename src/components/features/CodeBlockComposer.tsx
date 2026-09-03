@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Editor from '@monaco-editor/react'
 import { Code2, Plus, X } from 'lucide-react'
 import { useI18n } from '../../i18n'
+import { Select } from '../ui/Select'
 import { cn } from './featureClassNames'
 
 const CODE_LANGUAGES = [
@@ -69,13 +70,13 @@ export function CodeBlockComposer({ onInsert, className }: CodeBlockComposerProp
         <div className="mt-3 space-y-3">
           <label className="block space-y-1.5 text-xs font-medium text-foreground">
             {t('Dil', 'Language')}
-            <select
+            <Select
               value={language}
               onChange={(event) => setLanguage(event.target.value)}
               className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/30"
             >
               {CODE_LANGUAGES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-            </select>
+            </Select>
           </label>
 
           <div className="overflow-hidden rounded-2xl border border-border bg-[#101114]">

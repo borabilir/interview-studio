@@ -6,8 +6,10 @@ import {
   ArrowUp,
   ArrowUpRight,
   BookOpenCheck,
+  Check,
   ChevronDown,
   ChevronRight,
+  Copy,
   CreditCard,
   FolderTree,
   Hash,
@@ -31,6 +33,7 @@ import {
   FlashcardInsightEditorFields,
 } from '../components/features/FlashcardInsightFields'
 import { SmartQuestionPaste } from '../components/features/SmartQuestionPaste'
+import { Select } from '../components/ui/Select'
 import {
   emptyFlashcardInsights,
   normalizeFlashcardInsights,
@@ -134,6 +137,7 @@ export default function TopicsPage() {
   const [topicTagText, setTopicTagText] = useState('')
   const [draft, setDraft] = useState<QuickQuestionDraft>(emptyQuestion)
   const [expandedTopicIds, setExpandedTopicIds] = useState<Set<string>>(new Set())
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle')
 
   const topicsQuery = useQuery({
     queryKey: queryKeys.topics.all,
@@ -193,6 +197,41 @@ export default function TopicsPage() {
   const cardCountFor = (topic: TopicDto) => {
     const ids = new Set([topic.id, ...(childrenByParent.get(topic.id) ?? []).map((child) => child.id)])
     return cards.filter((card) => card.topicId && ids.has(card.topicId)).length
+  }
+
+  const copyAllTopics = async () => {
+    const cardsByTopic = new Map<string, FlashcardDto[]>()
+    for (const card of cards) {
+      if (!card.topicId || !topicById.has(card.topicId)) continue
+      const topicCards = cardsByTopic.get(card.topicId) ?? []
+      topicCards.push(card)
+      cardsByTopic.set(card.topicId, topicCards)
+    }
+    for (const topicCards of cardsByTopic.values()) {
+      topicCards.sort((a, b) =>
+        new Date(a.createdAtUtc).getTime() - new Date(b.createdAtUtc).getTime()
+        || a.question.localeCompare(b.question, locale),
+      )
+    }
+
+    const lines: string[] = []
+    for (const root of rootTopics) {
+      if (lines.length) lines.push('')
+      lines.push(`# ${root.name}`)
+      for (const card of cardsByTopic.get(root.id) ?? []) lines.push(`- ${card.question}`)
+      for (const child of childrenByParent.get(root.id) ?? []) {
+        lines.push('', `## ${child.name}`)
+        for (const card of cardsByTopic.get(child.id) ?? []) lines.push(`- ${card.question}`)
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'))
+      setCopyStatus('copied')
+    } catch {
+      setCopyStatus('error')
+    }
+    window.setTimeout(() => setCopyStatus('idle'), 1800)
   }
 
   const priorityLabel = (priority: ApiPriority) => {
@@ -506,6 +545,17 @@ export default function TopicsPage() {
         )}
         actions={(
           <>
+            <ActionButton
+              icon={copyStatus === 'copied' ? Check : Copy}
+              disabled={topicsQuery.isPending || cardsQuery.isPending || rootTopics.length === 0}
+              onClick={() => void copyAllTopics()}
+            >
+              {copyStatus === 'copied'
+                ? t('Kopyalandı', 'Copied')
+                : copyStatus === 'error'
+                  ? t('Kopyalanamadı', 'Could not copy')
+                  : t('Tüm listeyi kopyala', 'Copy full list')}
+            </ActionButton>
             <ActionButton icon={Plus} onClick={() => openCreateTopic()}>{t('Konu ekle', 'Add topic')}</ActionButton>
             <ActionButton icon={BookOpenCheck} variant="primary" onClick={() => openQuickAdd()}>
               {t('Hızlı soru ekle', 'Quick add question')}
@@ -750,7 +800,7 @@ export default function TopicsPage() {
             <form className="mt-5 space-y-4" onSubmit={handleSaveTopic}>
               <label className="block space-y-1.5 text-xs font-medium text-foreground">
                 {t('Üst konu', 'Parent topic')}
-                <select
+                <Select
                   value={newTopic.parentTopicId ?? ''}
                   onChange={(event) => setNewTopic((current) => ({ ...current, parentTopicId: event.target.value || null }))}
                   disabled={!canChangeTopicParent}
@@ -758,7 +808,7 @@ export default function TopicsPage() {
                 >
                   <option value="">{t('Ana konu olarak ekle', 'Add as main topic')}</option>
                   {rootTopics.filter((topic) => topic.id !== editingTopic?.id).map((topic) => <option key={topic.id} value={topic.id}>{topic.name}</option>)}
-                </select>
+                </Select>
               </label>
               {!canChangeTopicParent ? <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-300">{t('Alt konuları olan bir ana konunun üst konusu değiştirilemez.', 'A topic with subtopics cannot be moved under another parent.')}</p> : null}
               <div className="grid gap-4 sm:grid-cols-2">
@@ -778,12 +828,12 @@ export default function TopicsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-1.5 text-xs font-medium text-foreground">
                   {t('Öncelik', 'Priority')}
-                  <select value={newTopic.priority} onChange={(event) => setNewTopic((current) => ({ ...current, priority: event.target.value as ApiPriority }))} className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none">
+                  <Select value={newTopic.priority} onChange={(event) => setNewTopic((current) => ({ ...current, priority: event.target.value as ApiPriority }))} className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none">
                     <option value="Critical">{t('Kritik', 'Critical')}</option>
                     <option value="High">{t('Yüksek', 'High')}</option>
                     <option value="Medium">{t('Orta', 'Medium')}</option>
                     <option value="Low">{t('Düşük', 'Low')}</option>
-                  </select>
+                  </Select>
                 </label>
                 <label className="space-y-1.5 text-xs font-medium text-foreground">
                   {t('Renk', 'Color')}
@@ -820,24 +870,24 @@ export default function TopicsPage() {
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <label className="space-y-1.5 text-xs font-medium text-foreground">
                 {t('Konu', 'Topic')}
-                <select
+                <Select
                   value={draft.topicId}
                   onChange={(event) => setDraft((current) => ({ ...current, topicId: event.target.value, subtopicId: '', newSubtopic: '' }))}
                   className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none"
                 >
                   {rootTopics.map((topic) => <option key={topic.id} value={topic.id}>{topic.name}</option>)}
-                </select>
+                </Select>
               </label>
               <label className="space-y-1.5 text-xs font-medium text-foreground">
                 {t('Alt konu', 'Subtopic')}
-                <select
+                <Select
                   value={draft.subtopicId}
                   onChange={(event) => setDraft((current) => ({ ...current, subtopicId: event.target.value, newSubtopic: '' }))}
                   className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none"
                 >
                   <option value="">{selectedRoot ? t(`${selectedRoot.name} altına ekle`, `Add under ${selectedRoot.name}`) : t('Alt konu yok', 'No subtopic')}</option>
                   {subtopicOptions.map((topic) => <option key={topic.id} value={topic.id}>{topic.name}</option>)}
-                </select>
+                </Select>
               </label>
             </div>
 
@@ -848,11 +898,11 @@ export default function TopicsPage() {
               </label>
               <label className="space-y-1.5 text-xs font-medium text-foreground">
                 {t('Zorluk', 'Difficulty')}
-                <select value={draft.difficulty} onChange={(event) => setDraft((current) => ({ ...current, difficulty: event.target.value as ApiDifficulty }))} className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none">
+                <Select value={draft.difficulty} onChange={(event) => setDraft((current) => ({ ...current, difficulty: event.target.value as ApiDifficulty }))} className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none">
                   <option value="Easy">{difficultyLabel('Easy')}</option>
                   <option value="Medium">{difficultyLabel('Medium')}</option>
                   <option value="Hard">{difficultyLabel('Hard')}</option>
-                </select>
+                </Select>
               </label>
             </div>
 
@@ -896,5 +946,3 @@ export default function TopicsPage() {
 }
 
 export { TopicsPage }
-
-
