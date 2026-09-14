@@ -159,8 +159,16 @@ a {
     @apply m-0 rounded-none border-0 bg-transparent p-4 shadow-none;
   }
 
+  .markdown-answer .markdown-code-fallback {
+    @apply m-0 rounded-none border-0 bg-transparent p-4 shadow-none;
+  }
+
+  .markdown-answer .markdown-table-wrap {
+    @apply my-4 overflow-x-auto rounded-xl border border-border;
+  }
+
   .markdown-answer table {
-    @apply my-4 w-full border-collapse overflow-hidden rounded-xl text-left text-xs;
+    @apply w-full border-collapse text-left text-xs;
   }
 
   .markdown-answer th,
@@ -170,6 +178,88 @@ a {
 
   .markdown-answer th {
     @apply bg-muted/60 font-semibold text-foreground;
+  }
+
+  .markdown-answer.project-document {
+    @apply text-base leading-8 text-foreground/90;
+  }
+
+  .markdown-answer.project-document h1 {
+    @apply mb-5 mt-12 text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl;
+  }
+
+  .markdown-answer.project-document h1:first-child {
+    @apply mt-0;
+  }
+
+  .markdown-answer.project-document h2 {
+    @apply mb-4 mt-10 border-b border-border/70 pb-3 text-xl font-semibold tracking-[-0.025em] text-foreground sm:text-2xl;
+  }
+
+  .markdown-answer.project-document h3 {
+    @apply mb-3 mt-7 text-base font-semibold tracking-[-0.015em] text-foreground sm:text-lg;
+  }
+
+  .markdown-answer.project-document h4 {
+    @apply mb-2 mt-6 text-sm font-semibold uppercase tracking-[0.08em] text-foreground;
+  }
+
+  .markdown-answer.project-document p {
+    @apply my-4 whitespace-normal text-foreground/90;
+  }
+
+  .markdown-answer.project-document strong {
+    @apply font-semibold text-foreground;
+  }
+
+  .markdown-answer.project-document ul,
+  .markdown-answer.project-document ol {
+    @apply my-4 space-y-1.5 pl-6;
+  }
+
+  .markdown-answer.project-document li {
+    @apply pl-1 text-foreground/90;
+  }
+
+  .markdown-answer.project-document li::marker {
+    color: rgb(var(--accent));
+  }
+
+  .markdown-answer.project-document blockquote {
+    @apply my-6 rounded-r-2xl border-l-4 border-primary bg-primary/5 px-5 py-3 text-foreground;
+  }
+
+  .markdown-answer.project-document blockquote p {
+    @apply my-1 text-foreground;
+  }
+
+  .markdown-answer.project-document hr {
+    @apply my-10 border-0 border-t border-border;
+  }
+
+  .markdown-answer.project-document a {
+    @apply font-medium text-primary underline decoration-primary/35 underline-offset-4 transition hover:decoration-primary;
+  }
+
+  .markdown-answer.project-document .markdown-code-block {
+    @apply my-6;
+  }
+
+  .markdown-answer.project-document .markdown-table-wrap {
+    @apply my-6;
+  }
+
+  .markdown-answer.project-document table {
+    @apply min-w-[36rem] text-sm text-foreground/90;
+  }
+
+  .markdown-answer.project-document th,
+  .markdown-answer.project-document td {
+    @apply px-4 py-3 align-top;
+  }
+
+  .markdown-answer.project-document tbody tr:nth-child(even) {
+    @apply bg-muted/25;
   }
 
   .easy-mode-page,

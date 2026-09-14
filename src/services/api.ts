@@ -142,6 +142,10 @@ export const api = {
   },
   projectDocuments: {
     list: <T>() => request<T>('/api/project-documents'),
+    get: <T>(id: string) => request<T>(`/api/project-documents/${encodeURIComponent(id)}`),
+    sections: <T>(id: string) => request<T>(`/api/project-documents/${encodeURIComponent(id)}/sections`),
+    section: <T>(id: string, sectionId: string) =>
+      request<T>(`/api/project-documents/${encodeURIComponent(id)}/sections/${encodeURIComponent(sectionId)}`),
   },
   search: <T>(query: string) => request<T>(`/api/search${queryString({ q: query })}`),
   ai: {

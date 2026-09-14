@@ -1,10 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import {
+  ArrowLeft,
   BookOpenCheck,
   ChevronLeft,
   ChevronRight,
   Command,
   CreditCard,
+  FolderOpen,
   Layers3,
   Menu,
   Moon,
@@ -26,11 +28,13 @@ import { useI18n } from '../../i18n'
 import { useDebouncedValue } from '../../hooks/use-debounced-value'
 import { api } from '../../services/api'
 import type { SearchResultDto } from '../../types/api'
+import type { ProjectDocumentSection, ProjectDocumentSummary } from '../../types/project-documents'
 
 const navigation = [
   { tr: 'Konular', en: 'Topics', to: '/topics', icon: Layers3 },
   { tr: 'Pratik', en: 'Practice', to: '/flashcards', icon: CreditCard },
   { tr: 'Kısa Notlar', en: 'Short Notes', to: '/short-notes', icon: StickyNote },
+  { tr: 'Projeler', en: 'Projects', to: '/projects', icon: FolderOpen },
 ]
 
 type CommandResultItem = {
@@ -64,6 +68,22 @@ function Sidebar({
   onMobileClose: () => void
 }) {
   const { t } = useI18n()
+  const location = useLocation()
+  const routeParts = location.pathname.split('/').filter(Boolean)
+  const projectId = routeParts[0] === 'projects' && routeParts[1] ? decodeURIComponent(routeParts[1]) : ''
+  const routeSectionId = projectId && routeParts[2] ? decodeURIComponent(routeParts[2]) : ''
+  const { data: projects = [] } = useQuery({
+    queryKey: ['project-documents'],
+    queryFn: () => api.projectDocuments.list<ProjectDocumentSummary[]>(),
+    enabled: Boolean(projectId),
+  })
+  const { data: projectSections = [] } = useQuery({
+    queryKey: ['project-documents', projectId, 'sections'],
+    queryFn: () => api.projectDocuments.sections<ProjectDocumentSection[]>(projectId),
+    enabled: Boolean(projectId),
+  })
+  const activeProject = projects.find((project) => project.id === projectId)
+  const activeSectionId = routeSectionId || projectSections[0]?.id || ''
 
   return (
     <>
@@ -98,44 +118,103 @@ function Sidebar({
         </div>
 
         <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-5">
-          {!collapsed ? (
-            <p className="mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted/70">
-              {t('Çalışma', 'Workspace')}
-            </p>
-          ) : null}
-          <div className="space-y-1">
-            {navigation.map((item) => {
-              const label = t(item.tr, item.en)
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={onMobileClose}
-                  title={collapsed ? label : undefined}
-                  className={({ isActive }) =>
-                    cn(
-                      'focus-ring group relative flex h-10 items-center rounded-xl text-[13px] font-medium transition-colors',
-                      collapsed ? 'justify-center px-0' : 'gap-3 px-2.5',
-                      isActive
-                        ? 'bg-ink text-canvas shadow-sm dark:bg-white dark:text-[#1e1e1c]'
-                        : 'text-muted hover:bg-ink/[0.05] hover:text-ink',
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon className={cn('h-[17px] w-[17px] shrink-0', isActive ? 'stroke-[2.2]' : 'stroke-[1.8]')} />
-                      {!collapsed ? <span className="truncate">{label}</span> : null}
-                      {isActive && !collapsed ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-accent" /> : null}
-                    </>
-                  )}
-                </NavLink>
-              )
-            })}
-          </div>
+          {projectId ? (
+            <>
+              <NavLink
+                to="/projects"
+                onClick={onMobileClose}
+                title={collapsed ? t('Projeler’e dön', 'Back to projects') : undefined}
+                className={cn(
+                  'focus-ring group mb-5 flex h-10 items-center rounded-xl border border-border/70 bg-canvas/60 text-[13px] font-medium text-muted transition hover:bg-canvas hover:text-ink',
+                  collapsed ? 'justify-center px-0' : 'gap-3 px-2.5',
+                )}
+              >
+                <ArrowLeft className="h-[17px] w-[17px] shrink-0" />
+                {!collapsed ? <span>{t('Projeler’e dön', 'Back to projects')}</span> : null}
+              </NavLink>
+
+              {!collapsed ? (
+                <div className="mb-4 px-2.5">
+                  <p className="truncate text-sm font-semibold tracking-[-0.02em] text-ink">
+                    {activeProject?.name ?? projectId}
+                  </p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted/70">
+                    {t('Bölümler', 'Sections')}
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="space-y-1">
+                {projectSections.map((section, index) => {
+                  const selected = section.id === activeSectionId
+                  return (
+                    <NavLink
+                      key={section.id}
+                      to={`/projects/${encodeURIComponent(projectId)}/${encodeURIComponent(section.id)}`}
+                      onClick={onMobileClose}
+                      title={collapsed ? section.title : undefined}
+                      className={cn(
+                        'focus-ring group relative flex min-h-10 items-center rounded-xl text-[13px] font-medium transition-colors',
+                        collapsed ? 'justify-center px-0' : 'gap-3 px-2.5 py-2',
+                        selected
+                          ? 'bg-ink text-canvas shadow-sm dark:bg-white dark:text-[#1e1e1c]'
+                          : 'text-ink/75 hover:bg-ink/[0.05] hover:text-ink',
+                      )}
+                    >
+                      <span className={cn(
+                        'grid h-[22px] w-[22px] shrink-0 place-items-center rounded-md text-[9px] font-semibold',
+                        selected ? 'bg-accent text-white' : 'bg-subtle text-ink/70',
+                      )}>
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      {!collapsed ? <span className="leading-5">{section.title}</span> : null}
+                    </NavLink>
+                  )
+                })}
+              </div>
+            </>
+          ) : (
+            <>
+              {!collapsed ? (
+                <p className="mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted/70">
+                  {t('Çalışma', 'Workspace')}
+                </p>
+              ) : null}
+              <div className="space-y-1">
+                {navigation.map((item) => {
+                  const label = t(item.tr, item.en)
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      onClick={onMobileClose}
+                      title={collapsed ? label : undefined}
+                      className={({ isActive }) =>
+                        cn(
+                          'focus-ring group relative flex h-10 items-center rounded-xl text-[13px] font-medium transition-colors',
+                          collapsed ? 'justify-center px-0' : 'gap-3 px-2.5',
+                          isActive
+                            ? 'bg-ink text-canvas shadow-sm dark:bg-white dark:text-[#1e1e1c]'
+                            : 'text-muted hover:bg-ink/[0.05] hover:text-ink',
+                        )
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <item.icon className={cn('h-[17px] w-[17px] shrink-0', isActive ? 'stroke-[2.2]' : 'stroke-[1.8]')} />
+                          {!collapsed ? <span className="truncate">{label}</span> : null}
+                          {isActive && !collapsed ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-accent" /> : null}
+                        </>
+                      )}
+                    </NavLink>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </nav>
 
-        {!collapsed ? (
+        {!collapsed && !projectId ? (
           <div className="border-t p-3">
             <div className="rounded-xl border bg-canvas/70 p-3">
               <p className="text-xs font-semibold">{t('Odak modu', 'Focus mode')}</p>
@@ -296,7 +375,9 @@ export function AppShell() {
   const location = useLocation()
   useAppearance()
 
-  const page = location.pathname.startsWith('/short-notes')
+  const page = location.pathname.startsWith('/projects')
+    ? { title: t('Projeler', 'Projects'), eyebrow: t('Proje çalışma günlüğü', 'Project learning log') }
+    : location.pathname.startsWith('/short-notes')
     ? { title: t('Kısa Notlar', 'Short Notes'), eyebrow: t('Hızlı çalışma alanı', 'Quick study workspace') }
     : location.pathname.startsWith('/flashcards')
     ? { title: t('Pratik', 'Practice'), eyebrow: t('Mülakat simülasyonu', 'Interview simulation') }

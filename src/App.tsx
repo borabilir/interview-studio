@@ -8,6 +8,7 @@ const TopicDetailPage = lazy(() => import('./pages/TopicDetailPage'))
 const FlashcardsPage = lazy(() => import('./pages/FlashcardsPage'))
 const EasyModePage = lazy(() => import('./pages/EasyModePage'))
 const ShortNotesPage = lazy(() => import('./pages/ShortNotesPage'))
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'))
 
 function PageLoader() {
   const { t } = useI18n()
@@ -42,6 +43,9 @@ export default function App() {
         <Route path="topics/:topicId" element={<LazyPage><TopicDetailPage /></LazyPage>} />
         <Route path="flashcards" element={<LazyPage><FlashcardsPage /></LazyPage>} />
         <Route path="short-notes" element={<LazyPage><ShortNotesPage /></LazyPage>} />
+        <Route path="projects" element={<LazyPage><ProjectsPage /></LazyPage>} />
+        <Route path="projects/:projectId" element={<LazyPage><ProjectsPage /></LazyPage>} />
+        <Route path="projects/:projectId/:sectionId" element={<LazyPage><ProjectsPage /></LazyPage>} />
         <Route path="*" element={<Navigate to="/topics" replace />} />
       </Route>
     </Routes>

@@ -17,6 +17,7 @@ const dragRegionStyle = { WebkitAppRegion: 'drag' } as CSSProperties
 const noDragRegionStyle = { WebkitAppRegion: 'no-drag' } as CSSProperties
 
 const PROJECT_LABELS: Record<string, string> = {
+  ledgerly: 'ledgerly',
   novartis: 'sys',
   hcmonair: 'hcm',
   'chatbot-backend': 'bot be',
@@ -27,7 +28,7 @@ const PROJECT_LABELS: Record<string, string> = {
   resumeparser: 'parser',
 }
 
-const PROJECT_ORDER = ['novartis', 'hcmonair', 'resumeparser', 'chatbot-backend', 'chatbot-dashboard', 'chatbot-widget', 'adserve-dashboard', 'rambly']
+const PROJECT_ORDER = ['ledgerly', 'novartis', 'hcmonair', 'resumeparser', 'chatbot-backend', 'chatbot-dashboard', 'chatbot-widget', 'adserve-dashboard', 'rambly']
 
 function DesktopTitleBar({ enabled }: { enabled: boolean }) {
   if (!enabled) return null

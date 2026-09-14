@@ -1,4 +1,11 @@
-import { isValidElement, useEffect, useState, type HTMLAttributes, type ReactNode } from 'react'
+import {
+  isValidElement,
+  useEffect,
+  useState,
+  type HTMLAttributes,
+  type ReactNode,
+  type TableHTMLAttributes,
+} from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { codeToHtml } from 'shiki'
@@ -81,7 +88,7 @@ function HighlightedCodeBlock({ code, language }: { code: string; language: stri
   }, [code, normalizedLanguage])
 
   return (
-    <div className="my-4 overflow-hidden rounded-2xl border border-white/10 bg-[#101114] shadow-inner">
+    <div className="markdown-code-block my-4 overflow-hidden rounded-2xl border border-white/10 bg-[#101114] shadow-inner">
       <div className="flex h-9 items-center justify-between border-b border-white/10 px-3">
         <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55">
           {languageLabel(normalizedLanguage)}
@@ -90,7 +97,7 @@ function HighlightedCodeBlock({ code, language }: { code: string; language: stri
       {html ? (
         <div className="shiki-code-body" dangerouslySetInnerHTML={{ __html: html }} />
       ) : (
-        <pre className="m-0 overflow-x-auto border-0 bg-transparent p-4 text-xs leading-6 text-white">
+        <pre className="markdown-code-fallback m-0 overflow-x-auto border-0 bg-transparent p-4 text-xs leading-6 text-white shadow-none">
           <code>{code}</code>
         </pre>
       )}
@@ -123,6 +130,14 @@ function MarkdownPre({ children }: { children?: ReactNode }) {
   return <HighlightedCodeBlock code={rawCode} language={language} />
 }
 
+function MarkdownTable({ children, ...props }: TableHTMLAttributes<HTMLTableElement>) {
+  return (
+    <div className="markdown-table-wrap">
+      <table {...props}>{children}</table>
+    </div>
+  )
+}
+
 export function MarkdownAnswer({ value, compact = false, className }: MarkdownAnswerProps) {
   return (
     <div className={cn('markdown-answer', compact ? 'text-xs leading-5' : 'text-sm leading-6', className)}>
@@ -131,6 +146,7 @@ export function MarkdownAnswer({ value, compact = false, className }: MarkdownAn
         components={{
           pre: MarkdownPre,
           code: MarkdownCode,
+          table: MarkdownTable,
         }}
       >
         {value}
