@@ -15,7 +15,7 @@ Yol haritası takvim değil, öğrenme sırasıdır. Bir aşama yalnızca kod ya
 
 ## Aşama 1 — Basit çalışan çekirdek
 
-**Durum (2026-09-15):** Devam ediyor. Create Wallet, PostgreSQL ve HTTP testleri tamamlandı. Küçük bir concurrency ön lab'ında aynı wallet'ın eşzamanlı oluşturulması 201/409 ile doğrulandı; bu, Aşama 2'deki double-spending veya idempotency çalışmalarının tamamlandığı anlamına gelmez. Transfer ve double-entry ledger hâlâ sıradadır.
+**Durum (2026-09-15):** Devam ediyor. Create Wallet, Get Wallet (ID ile okuma), PostgreSQL ve HTTP testleri tamamlandı. POST Location üzerinden yeni wallet okunabiliyor. Küçük bir concurrency ön lab'ında aynı wallet'ın eşzamanlı oluşturulması 201/409 ile doğrulandı; bu, Aşama 2'deki double-spending veya idempotency çalışmalarının tamamlandığı anlamına gelmez. Transfer ve double-entry ledger hâlâ sıradadır.
 
 - Tek ASP.NET Core uygulaması
 - İlişkisel veritabanı

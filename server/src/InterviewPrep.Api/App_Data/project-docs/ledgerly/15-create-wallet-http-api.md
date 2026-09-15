@@ -3,6 +3,8 @@
 **Durum:** Tamamlandı  
 **Tarih:** 2026-09-14
 
+Bu bölüm ilk HTTP milestone'ının kaydıdır. 2026-09-15'te GET ve POST Location eklendi; güncel sözleşme ve 33 test sonucu [18 — Get Wallet](18-get-wallet-query.md) bölümündedir.
+
 ## 1. Bu aşamada ne yaptık?
 
 Application ve persistence katmanlarında çalışan Create Wallet use-case'ini gerçek bir HTTP endpoint'i olarak dışarı açtık:

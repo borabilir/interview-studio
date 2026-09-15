@@ -1,6 +1,6 @@
 # CQRS ve Create Wallet Application Akışı
 
-**Durum:** Command, persistence ve HTTP adaptörleri uygulandı; query tarafı planlandı
+**Durum:** Create Wallet command ve Get Wallet query aynı PostgreSQL üzerinde uygulandı
 **Tarih:** 2026-09-13
 
 ## Amaç
@@ -26,7 +26,7 @@ API ────────────────> Application ────�
 
 ## CQRS'i şu anda nasıl kullanıyoruz?
 
-CQRS, write ve read use-case'lerini farklı modellerle ele alma yaklaşımıdır. Şu an yalnızca ilk command tarafı uygulanmıştır:
+CQRS, write ve read use-case'lerini farklı modellerle ele alma yaklaşımıdır. İlk command tarafı şu akışla uygulanmıştır:
 
 ```text
 CreateWalletCommand
@@ -38,7 +38,7 @@ Domain + persistence portları
 CreateWalletResult
 ```
 
-Henüz ayrı read database, projection veya query handler yoktur. Bu nedenle “tamamen ayrılmış CQRS sistemi” değil, CQRS yönünde açık bir use-case ayrımı uygulanmıştır.
+GetWalletQuery ve GetWalletHandler da eklendi. Read ve write aynı PostgreSQL wallets tablosunu ve repository'yi kullanıyor; ayrı projection/database yok. Güncel query sözleşmesi, AsNoTracking ve testler [18 — Get Wallet](18-get-wallet-query.md) bölümündedir.
 
 ## Command
 
@@ -75,7 +75,7 @@ Handler iş kuralını yeniden yazmaz. Geçerli wallet oluşturma sorumluluğunu
 public sealed record CreateWalletResult(Guid WalletId);
 ```
 
-Command sonucunda tam bir read model döndürmek yerine oluşturulan kaynağın kimliği döndürülür. API daha sonra bu kimlikle `201 Created` ve `Location` header üretebilir. Wallet detayını okuma ihtiyacı ayrı bir query use-case'i ile ele alınacaktır.
+Command sonucunda tam bir read model döndürmek yerine oluşturulan kaynağın kimliği döndürülür. API bu kimlikle `201 Created` ve gerçek GET route'una işaret eden `Location` header üretir. Wallet detayını okuma ihtiyacı ayrı bir query use-case'i ile ele alınacaktır.
 
 Alternatif olarak handler doğrudan `Guid` döndürebilirdi. İsimlendirilmiş result tipi, use-case sözleşmesini daha açık kılar ve ileride metadata eklenmesine alan bırakır.
 
@@ -143,11 +143,11 @@ Handler önce `ExistsAsync` çağırır. Bu kontrol kullanıcıya erken ve anla�
 İstek B: Insert
 ```
 
-Kalıcı doğruluk için `(owner_id, currency)` üzerinde PostgreSQL unique index eklendi. Eşzamanlı iki isteğin oluşturacağı constraint ihlali ileride concurrency lab'ında reproduce edilip aynı Application hatasına çevrilecektir.
+Kalıcı doğruluk için `(owner_id, currency)` üzerinde PostgreSQL unique index eklendi. Eşzamanlı iki isteğin oluşturduğu ilgili constraint ihlali concurrency lab'ında reproduce edilip aynı Application hatasına çevrildi.
 
 ## Hata modeli kararı
 
-Duplicate wallet şu anda `WalletAlreadyExistsException` ile temsil edilir. API bu hatayı daha sonra `409 Conflict`e dönüştürecektir.
+Duplicate wallet şu anda `WalletAlreadyExistsException` ile temsil edilir. API bu hatayı `409 Conflict`e dönüştürür. Concurrent duplicate çevirisi [17. bölümde](17-concurrency-lab-solution.md) tamamlandı.
 
 Alternatifler:
 
@@ -174,7 +174,7 @@ Doğrulanan senaryolar:
 1. Wallet yoksa oluşturulur, eklenir, bir kez kaydedilir ve ID döner.
 2. Wallet varsa `WalletAlreadyExistsException` atılır; ekleme ve save yapılmaz.
 
-Mevcut Application test sonucu: **2 başarılı test**.
+Create Wallet için **2 başarılı Application testi** var; Get Wallet'ın 2 testiyle güncel Application toplamı **4** oldu.
 
 Infrastructure tamamlandıktan sonra aynı akış gerçek PostgreSQL ile de doğrulandı: **2 başarılı integration testi**.
 
@@ -196,12 +196,13 @@ Infrastructure tamamlandıktan sonra aynı akış gerçek PostgreSQL ile de doğ
 - `POST /api/wallets` endpoint'i
 - Exception-to-ProblemDetails mapping
 - HTTP functional integration testleri
+- Dar unique violation çevirisi ve concurrency 201/409 testi
+- Get Wallet query, 200/404, AsNoTracking okuma ve POST Location
 
 ### Planlandı
 
-- Unique violation exception mapping ve concurrency testi
-- Query tarafı ve read model
+- İhtiyaç oluştuğunda ayrı read projection/database
 
 ## Sonraki adım
 
-HTTP adaptörü tamamlandı. Sıradaki adım eşzamanlı iki Create Wallet isteğinin pre-check'i birlikte geçtiği yarışı reproduce etmek ve unique constraint ihlalini kontrollü `409 Conflict` sonucuna çevirmektir.
+Concurrency çözümü ve ilk query tamamlandı. Ayrıntılar 17 ve 18. bölümlerde. Sırada finansal çekirdek için ledger/deposit/transfer kurallarının tasarlanması var.
