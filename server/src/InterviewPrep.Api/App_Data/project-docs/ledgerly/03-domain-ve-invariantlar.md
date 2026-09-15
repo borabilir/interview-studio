@@ -1,5 +1,7 @@
 # Domain ve Invariant'lar
 
+> **Uygulama sınırı (2026-09-15):** Dengeli journal ve bellekte immutable posting modeli uygulandı. Kalıcı ledger, negatif bakiye koruması, idempotency ve reversal aşağıda hedef olarak anlatılır; henüz uygulanmadı. [Güncel domain adımı](19-double-entry-ledger-domain.md).
+
 ## Başlangıç ubiquitous language
 
 | Terim | Anlamı |
@@ -19,7 +21,7 @@ Bu sözlük domain keşfi ilerledikçe genişletilecek ve anlamı değişen teri
 
 ## Wallet ile ledger aynı şey değildir
 
-Wallet, kullanıcıya sunulan üründür. Ledger ise finansal gerçeğin kaydıdır. Kullanıcı arayüzünde tek bir bakiye gösterilse bile bu bakiye ledger posting'lerinden veya güvenilir bir projection'dan türetilir.
+Wallet, kullanıcıya sunulan üründür. Hedef tasarımda ledger finansal gerçeğin kaydıdır; mevcut Wallet.Balance henüz ledger'dan türetilmez. Kullanıcı arayüzünde tek bir bakiye gösterilse bile bu bakiye ledger posting'lerinden veya güvenilir bir projection'dan türetilir.
 
 Örnek bir iç transfer:
 
@@ -36,10 +38,10 @@ Net hareket                0 TRY
 
 ### INV-001 — Dengeli journal
 
-Her journal entry için aynı currency içindeki posting toplamı sıfır olmalıdır.
+Her journal entry için aynı currency içindeki debit toplamı credit toplamına eşit olmalıdır. Yukarıdaki +/- gösterim müşterinin bakiye etkisini anlatır; kodda Amount pozitiftir ve yön ayrı PostingDirection alanındadır.
 
 ```text
-sum(posting.amount) == 0
+sum(debit.amount) == sum(credit.amount)
 ```
 
 ### INV-002 — Negatif bakiye yok

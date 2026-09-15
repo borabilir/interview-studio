@@ -1,5 +1,7 @@
 # DDD ve Create Wallet Domain Modeli
 
+> Bu bölüm Create Wallet milestone'unun tarihsel anlatımıdır. Wallet persistence ve concurrency çözümü sonradan tamamlandı. [19. bölümdeki ledger domain modeli](19-double-entry-ledger-domain.md) ile toplam domain test sayısı 41 oldu; aşağıdaki 12 test ve “henüz” listesi ilk milestone'a aittir.
+
 **Durum:** Uygulandı
 **Tarih:** 2026-09-13
 
