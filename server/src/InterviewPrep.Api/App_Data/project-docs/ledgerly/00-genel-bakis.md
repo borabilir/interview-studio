@@ -2,7 +2,7 @@
 
 *Digital Wallet & Payment Platform*
 
-> **Mevcut durum:** Proje inception ve dokümantasyon aşamasındadır. Henüz çalışan backend veya veritabanı implementasyonu yoktur.
+> **Mevcut durum (2026-09-15):** Create Wallet HTTP akışı gerçek PostgreSQL ile çalışıyor. Eşzamanlı duplicate yarışı reproduce edildi ve dar exception translation ile 201/409 sonucuna çevrildi. Toplam 28 test geçti. Transfer, ledger ve idempotency henüz uygulanmadı. Ayrıntılar [concurrency çözümü](17-concurrency-lab-solution.md) bölümünde.
 
 ## Proje ne yapıyor?
 

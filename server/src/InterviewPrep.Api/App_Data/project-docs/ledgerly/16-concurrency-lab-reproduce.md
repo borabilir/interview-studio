@@ -1,7 +1,9 @@
 # Concurrency Lab — Duplicate Wallet Yarışını Reproduce Etmek
 
-**Durum:** Problem deterministik olarak reproduce edildi; çözüm henüz uygulanmadı  
+**Durum:** Reproduce aşamasının tarihsel kaydı; çözüm 2026-09-15'te tamamlandı\
 **Tarih:** 2026-09-14
+
+Bu bölüm çözüm öncesi `201 + 500` gözlemini korur. Güncel implementasyon, `201 + 409` test sonucu ve mülakat anlatımı [17 — Concurrency Lab Çözümü](17-concurrency-lab-solution.md) içindedir.
 
 ## 1. Senaryo
 
@@ -135,6 +137,17 @@ Burada önemli mülakat ayrımı şudur:
 
 ## 8. Testi çalıştırma
 
+macOS / zsh / Bash:
+
+```bash
+docker compose up -d
+dotnet test tests/Ledgerly.IntegrationTests/Ledgerly.IntegrationTests.csproj --filter "Lab=ConcurrentCreateWallet" --logger "console;verbosity=normal"
+```
+
+Aynı komut reproduce commit'i `72fc271` üzerinde eski beklentiyi, çözümde yeni 201/409 beklentisini çalıştırır.
+
+PowerShell:
+
 ```powershell
 docker compose up -d
 
@@ -149,7 +162,7 @@ Bu bir characterization/reproduction testidir. Amacı mevcut sistemin davranış
 
 Çözüm uygulandığında aynı senaryo silinmeyecek. Beklenti `201 + 409` olarak değiştirilecek ve regression testine dönüşecektir.
 
-## 10. Sonraki adım
+## 10. Reproduce aşamasında belirlenen sonraki adım
 
 Henüz exception mapping eklenmedi. Bir sonraki aşamada alternatifler değerlendirilecek:
 
@@ -159,3 +172,5 @@ Henüz exception mapping eklenmedi. Bir sonraki aşamada alternatifler değerlen
 - Pessimistic/distributed lock
 
 Correctness, latency, throughput, karmaşıklık ve operasyonel maliyet açısından trade-off yapıldıktan sonra çözüm seçilecektir.
+
+Bu adım artık tamamlandı: [17 — Unique Violation'ı 409'a Çevirmek](17-concurrency-lab-solution.md).
