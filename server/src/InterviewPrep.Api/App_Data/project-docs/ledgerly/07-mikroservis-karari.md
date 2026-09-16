@@ -1,5 +1,19 @@
 # Neden Hemen Mikroservis Kullanmadık?
 
+## Monolith ve mikroservis nedir?
+
+Monolith, farklı işleri aynı çalışan uygulama içinde barındıran yapıdır. Cüzdan oluşturma ve para hareketi kodu aynı uygulamayla başlatılıp yayınlanabilir.
+
+Mikroservis yaklaşımında sorumluluklar ayrı uygulamalara bölünür. Örneğin bildirim uygulaması para transferi uygulamasından ayrı çalıştırılabilir ve güncellenebilir. Birbirlerine ağ üzerinden istek veya mesaj gönderirler.
+
+## Modüler monolith ne demek?
+
+Tek uygulama çalışır, ama içeride işler belirli sınırlarla ayrılır. Tek bir binadaki farklı bölümler gibi düşünebilirsin: aynı binadadırlar, görevleri farklıdır. Bu benzetme yalnızca organizasyonu anlatır; kodda sınırları yine bizim korumamız gerekir.
+
+Ne için kullanılır? Ayrı uygulamaların kurulum ve iletişim yükünü hemen üstlenmeden kodu sorumluluklarına göre düzenlemek için. Mikroservis ise bağımsız çalıştırma ve büyütme ihtiyacına cevap verebilir; karşılığında ağ hataları ve birden fazla uygulamayı işletme sorumluluğu getirir.
+
+## Bölümün uygulama bağlamı
+
 Ledgerly'nin hedef öğrenme alanları arasında mikroservis mimarisi vardır. Ancak başlangıç kararı **çok sayıda mikroservis kurmak değil, modüler tek servisle baseline üretmektir**.
 
 ## Problem

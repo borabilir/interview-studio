@@ -1,5 +1,25 @@
 # Create Wallet HTTP API ve Functional Test
 
+## HTTP API nedir?
+
+API, başka bir programın uygulamamızdan işlem istemek için kullandığı arayüzdür. HTTP API'de bu iletişim HTTP isteği ve cevabıyla yapılır. Örneğin bir mobil uygulama “bu kullanıcıya TRY wallet oluştur” isteğini API'ye gönderebilir.
+
+Endpoint, belirli HTTP metodu ve adresiyle erişilen işlemdir. `POST /api/wallets` wallet oluşturma endpoint'imizdir. Request gelen istek, response dönen cevaptır; JSON bu örnekte bilgileri taşıdığımız metin biçimidir.
+
+## Controller ve contract nedir?
+
+Controller, HTTP isteğini karşılayıp uygulamanın ilgili işlemini çağıran sınıftır. Contract, tarafların hangi alanları gönderip alacağına ilişkin sözleşmedir. CreateWalletRequest, gelen owner ve currency alanlarını; CreateWalletResponse, dönen wallet kimliğini tanımlar.
+
+Böylece dışarıdaki programın gördüğü veri biçimi ile içerideki Wallet nesnesini ayrı ele alabiliriz. Aşağıda isteğin controller'dan database'e kadar nasıl ilerlediğini izleyeceğiz.
+
+## HTTP durum kodları ne anlatır?
+
+201 yeni kaynağın oluşturulduğunu, 400 isteğin geçersiz olduğunu, 409 isteğin mevcut durumla çakıştığını, 500 beklenmeyen sunucu hatasını anlatır. Bunlar hatanın bütün ayrıntısı değil, istemcinin sonucu yorumlaması için ortak işaretlerdir.
+
+Functional test bu işlemi dışarıdan çağırıp görünen davranışı sınar. LedgerlyApiFactory, test içinde API'nin HTTP istek işleme hattını kurar; testimiz de bu hatta istek gönderir. Database kullanan bu testler ledgerly_tests'e bağlanır.
+
+## Bölümün uygulama bağlamı
+
 **Durum:** Tamamlandı  
 **Tarih:** 2026-09-14
 

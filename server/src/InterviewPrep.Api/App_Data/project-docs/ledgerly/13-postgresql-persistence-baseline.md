@@ -1,5 +1,25 @@
 # PostgreSQL Persistence Baseline
 
+## Persistence nedir?
+
+Persistence, veriyi uygulama kapandıktan sonra da kalacak şekilde saklamaktır. Bellekte Wallet.Create ile bir nesne oluşturmak, onu database'e yazmak değildir. Uygulama yeniden başladığında aynı wallet'ı bulabilmek için kalıcı kayıt gerekir.
+
+PostgreSQL bu projede veriyi tablolarda saklayan database'dir. EF Core, C# nesnelerini sorgulama ve kaydetme işlemlerinde kullandığımız kütüphane; Npgsql ise PostgreSQL bağlantısını sağlayan taraftır.
+
+## DbContext, mapping ve migration nedir?
+
+DbContext, EF Core ile database işlemlerini yürüttüğümüz çalışma nesnesidir. Kaydedilecek değişiklikleri takip edebilir ve SaveChangesAsync çağrısında database'e gönderir.
+
+Mapping, C# alanının hangi tablo/sütunda ve hangi türle saklanacağını tarif etmektir. Örneğin Wallet.Balance alanı database'de numeric(19,4) sütununa eşlenir. Migration ise database şemasında yapılacak değişikliklerin sürümlenmiş tarifidir; yeni tablo oluşturmak gibi.
+
+## Constraint ve transaction nedir?
+
+Constraint, database'in kayıt üzerinde uyguladığı kuraldır. Unique aynı değerin veya değer birleşiminin tekrarlanmasını, foreign key olmayan bir kayda referans verilmesini, check ise tanımlı koşula aykırı değer yazılmasını engellemek için kullanılır.
+
+Transaction bir grup database işlemini bütün olarak ele alır. Atomiklik, grubun yarısının kalmamasıdır: işlem ya tamamlanır ya geri alınır. Aşağıdaki bölüm bu kavramları önce tek wallet kaydı üzerinde uygular.
+
+## Bölümün uygulama bağlamı
+
 **Durum:** Uygulandı ve gerçek PostgreSQL ile doğrulandı
 **Tarih:** 2026-09-14
 

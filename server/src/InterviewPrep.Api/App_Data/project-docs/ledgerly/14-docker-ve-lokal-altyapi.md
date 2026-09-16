@@ -1,11 +1,21 @@
 # Docker ve Lokal Altyapı
 
+## Docker nedir, ne için kullanılır?
+
+Docker, uygulamaları gereken dosya ve ayarlarla container denen yalıtılmış çalışma ortamlarında başlatmamızı sağlayan araçtır. Ledgerly'de PostgreSQL'i bu şekilde çalıştırıyoruz; database'i her seferinde elle kurmak yerine tanımlı image'dan container başlatıyoruz.
+
+Image çalıştırılacak yazılımın şablonu, container bu şablondan başlatılan çalışan örnektir. Volume ise container yeniden oluşturulduğunda da saklamak istediğimiz database verisi için kullandığımız depolama alanıdır. “Container'ı sildim” ile “veriyi sildim” bu nedenle aynı şey olmak zorunda değildir.
+
+Docker Compose, hangi container'ın hangi port ve ayarlarla başlayacağını dosyada anlatmamızı sağlar. `docker compose up -d` bu tarifi uygular. Aşağıda PostgreSQL örneği üzerinden bu kelimelerin her birini açıyoruz.
+
+## Bölümün uygulama bağlamı
+
 **Durum:** PostgreSQL için uygulandı
 **Tarih:** 2026-09-14
 
 ## 1. Docker'ı bu projede neden kullanıyoruz?
 
-Ledgerly API şu anda doğrudan Windows host üzerinde çalışır. PostgreSQL ise Docker container içinde çalışır.
+İlk kurulum Windows üzerinde anlatılmıştır; API geliştirici bilgisayarında çalışır. Aynı ayrım mevcut macOS ortamında da geçerlidir. PostgreSQL ise Docker container içinde çalışır.
 
 ```text
 Windows host

@@ -1,6 +1,27 @@
 # Solution Kurulumu
 
-**Durum:** Komutlar planlandı; çalıştırma ve build kanıtı bekleniyor.
+## Solution ve project nedir?
+
+.NET'te project, birlikte derlenen kodların ve bağımlılıkların tanımıdır; ayarları .csproj dosyasında bulunur. Solution ise birlikte çalıştığımız projeleri gruplar. Ledgerly.slnx bütün çözümü tek komutla derleyip test edebilmemizi kolaylaştırır.
+
+Birden fazla project olması birden fazla servis çalıştığı anlamına gelmez. Domain, Application ve Infrastructure kodu, API uygulamasının kullandığı kütüphanelerdir.
+
+## Katman ne demek, ne için ayırıyoruz?
+
+Katman, benzer sorumlulukları bir araya getirdiğimiz kod bölümüdür. Bir wallet isteği üzerinden düşünelim:
+
+```text
+API            → İsteği alır, HTTP cevabını hazırlar.
+Application    → Wallet oluşturmak için gereken adımları yürütür.
+Domain         → Geçerli bir wallet'ın kurallarını korur.
+Infrastructure → Database'e erişim gibi teknik işleri yapar.
+```
+
+Böylece currency kuralını değiştirdiğimiz yer ile PostgreSQL sorgusunu değiştirdiğimiz yer ayrılır. Clean/Onion Architecture konuşurken temel amaçlardan biri, iş kurallarının HTTP veya database kütüphanesine bağımlı olmamasıdır. Aşağıdaki referans yönleri bu ayrımı kodda kurar.
+
+## Bölümün uygulama bağlamı
+
+**Tarihsel kayıt:** Aşağıdaki komutlar ilk solution kurulumu için hazırlanmış adımlardır. Mevcut solution artık oluşturuldu; dolu repository üzerinde yeniden kurulum komutları olarak çalıştırılmamalıdır.
 
 İlk teknik milestone, Wallet Core için küçük ve derlenebilir bir solution oluşturmaktır. Henüz EF Core, PostgreSQL container veya başka altyapı bileşeni eklenmeyecek.
 

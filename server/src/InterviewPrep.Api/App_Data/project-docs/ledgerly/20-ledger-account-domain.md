@@ -1,70 +1,157 @@
-# LedgerAccount: Wallet ve Muhasebe Hesabı
+# Ledger Account Nedir, Wallet'tan Farkı Ne?
 
-**Durum (2026-09-16):** LedgerAccount domain modeli uygulandı; hesap persistence'ı ve otomatik hesap açan use-case henüz yok.
+## Ledger account nedir?
 
-## Neden yeni kavram?
+Ledger account, belirli bir şeye ait para hareketlerini topladığımız muhasebe hesabıdır. Bir kayıt defterinde “Bora'ya ait hareketler” için ayrılmış sayfa gibi düşünebilirsin. Hareketin hangi hesaba ait olduğunu bu hesabın kimliğiyle belirtiriz.
 
-Posting.AccountId boş olmayan bir GUID olabiliyordu. Journal dengeyi kontrol ediyordu, fakat hesabın neyi temsil ettiğini bilmiyorduk. LedgerAccount ile hesap kimliği, türü, currency ve wallet ilişkisini tanımladık. Bu, ID'nin database'de gerçekten var olduğunu tek başına kanıtlamaz.
+Örneğin iki müşteriye ait iki ayrı hesap düşün:
 
-Wallet kullanıcının gördüğü üründür. Muhasebe hesabı ise hareketlerin işaret ettiği kayıttır. Wallet'a bağlı olmayan platform hesaplarını da temsil etmek istediğimiz için bu iki kimliği ayırdık.
+```text
+Bora'nın hesabına ait hareketler
+  500 TRY yatırma
+  100 TRY Ayşe'ye gönderme
 
-## Test yatırma örneği
+Ayşe'nin hesabına ait hareketler
+  Bora'dan 100 TRY alma
+```
 
-100 TRY test bakiyesi için düşünce örneği:
+Bu örnek yalnızca hesapların hareketleri nasıl ayırdığını gösterir. Kodda hesabın içinde böyle bir liste tutmuyoruz; hareket satırları hesabın kimliğine işaret ediyor.
 
-| Hesap | Tür | Yön | Tutar |
-|---|---|---|---|
-| Simüle edilmiş fon hesabı | Asset | Debit | 100 TRY |
-| Müşteri wallet hesabı | Liability | Credit | 100 TRY |
+## Ne için kullanılır?
 
-Platform açısından müşteri bakiyesi müşteriye olan borçtur. Asset debit ile, liability credit ile artar; [muhasebe açıklaması](https://docs.tigerbeetle.com/coding/financial-accounting/). Test fonu gerçek banka entegrasyonu veya doğrulanmış varlık değildir; test yatırmanın karşılığını simüle eder. Burada gelir/ücret modeli kurmadık.
+Bir hareketin kime veya neye ait olduğunu, hangi para biriminde tutulduğunu ve muhasebede nasıl yorumlanacağını belirlemek için kullanılır. Her hesabın bir müşteriye ait olması gerekmez. Platformun test fonunu temsil eden bir hesap da olabilir.
 
-## Kodda ne var?
+[Önceki bölümde](19-double-entry-ledger-domain.md) posting'i “bir hesabı etkileyen satır” diye tanımladık. LedgerAccount, o satırın işaret ettiği hesabı tanımlar.
+
+## Wallet ile aynı şey mi?
+
+Wallet, kullanıcının uygulamada gördüğü cüzdandır. Kime ait olduğu, kullanılabilir olup olmadığı ve gösterilen bakiye ürünün konusudur. Ledger account ise para hareketlerini muhasebede hangi hesapta izleyeceğimizi belirler.
+
+Bir wallet'ı bir müşteri muhasebe hesabına bağlayabiliriz. Ama platformun test fon hesabı için sahte bir müşteri wallet'ı açmak istemeyiz. Kavramları ayırmak bu ikinci hesabı da ifade etmemizi sağlar.
+
+Ledgerly'de ilişkiyi şöyle kuruyoruz:
+
+```text
+Wallet
+  Id: W1
+
+LedgerAccount
+  Id: A1
+  WalletId: W1
+
+Posting
+  AccountId: A1
+```
+
+Posting muhasebe hesabı A1'e aittir. A1'in hangi wallet'la ilişkili olduğunu WalletId alanından anlarız. `A1` ve `W1` örnek etiketlerdir; kodda bu kimlikler GUID türündedir.
+
+## Asset ve liability nedir?
+
+**Asset**, varlık demektir: hesabını tuttuğumuz kişi veya kuruluşun sahip olduğu ekonomik değer. **Liability**, yükümlülük demektir: başkasına olan borcu veya yerine getirmesi gereken ödeme yükümlülüğü.
+
+Burada platformun gözünden bakıyoruz. Senin wallet'ında 100 TRY varsa, sen bu parayı platformdan talep edebilirsin. Bu yüzden müşteriye ait tutarı platformun müşteriye borcu olarak düşünürüz: müşteri hesabı **Liability** olur.
+
+Test yatırmada dışarıdan fon geldiğini simüle ettiğimiz karşı hesap ise **Asset** olur. Bu test hesabı gerçek bir bankada para bulunduğunun kanıtı değildir. Gerçek para veya banka bağlantısı kurmadan muhasebe akışını öğrenmemizi sağlar. [Muhasebe türleri ve bakış açısı](https://docs.tigerbeetle.com/coding/financial-accounting/)
+
+## Debit ve credit bu hesaplarda ne yapar?
+
+Debit ve credit, hareketin muhasebe yönleridir. Bu iki hesap türünde etkileri şöyle:
+
+| Hesap türü | Debit | Credit |
+|---|---|---|
+| Asset — varlık | Artırır | Azaltır |
+| Liability — yükümlülük | Azaltır | Artırır |
+
+Bu nedenle “debit her zaman para eksiltir” diyemeyiz. Bu yönlerin anlamı hesabın türüyle birlikte okunur. [Debit/credit açıklaması](https://docs.tigerbeetle.com/coding/financial-accounting/)
+
+100 TRY test yatırmayı adım adım düşünelim:
+
+1. Dışarıdan 100 TRY fon gelmiş gibi bir örnek kuruyoruz.
+2. Test fon varlığımızı 100 artırıyoruz: Asset hesabına Debit 100.
+3. Müşteriye borcumuzu 100 artırıyoruz: Liability hesabına Credit 100.
+4. İki satırı aynı journal'a koyuyoruz; toplam debit ve credit 100 oluyor.
+
+İki hesabın da artması müşteriye 200 TRY vermek değildir. Bir hesap simüle edilen fonu, diğeri müşteriye karşı borcu anlatır.
+
+## Ledgerly'de hesabı nasıl oluşturuyoruz?
+
+İlk yol, mevcut bir wallet'a ait muhasebe hesabı oluşturmak:
 
 ```csharp
-var customerAccount = LedgerAccount.CreateForWallet(wallet.Id, wallet.Currency, now);
-var fundingAccount = LedgerAccount.CreateTestFunding(wallet.Currency, now);
+var customerAccount = LedgerAccount.CreateForWallet(
+    wallet.Id,
+    wallet.Currency,
+    now
+);
 ```
 
-CreateForWallet dolu bir WalletId ister, hesabı Liability oluşturur. CreateTestFunding wallet referansı almaz; WalletId null, Type Asset olur. İki metot da null Currency'yi reddeder. Kimlik üretilir, zaman UTC'ye çevrilir. Alanlar get-only'dir.
+Burada `wallet` daha önce oluşturulmuş bir Wallet nesnesi, `now` ise oluşturulma zamanı. Sonuçta yeni bir LedgerAccount nesnesi elde ederiz:
 
 ```text
-Wallet.Id
-    ↑ LedgerAccount.WalletId
-LedgerAccount.Id
-    ↑ Posting.AccountId
-JournalEntry.Postings
+Id           → Yeni muhasebe hesabı kimliği
+WalletId     → Verdiğimiz wallet'ın kimliği
+Type         → Liability
+Currency     → Verdiğimiz para birimi
+CreatedAtUtc → UTC'ye çevrilmiş zaman
 ```
 
-Oklar mantıksal referansları gösterir; bu ilişkilerin foreign key'leri henüz kurulmadı. LedgerAccount.Id ve WalletId aynı kavram değildir.
+İkinci yol, test fon hesabı oluşturmak:
 
-## Neden genel Create veya iki alt sınıf yok?
-
-Genel Create(type, walletId, ...) çağırana yanlış kombinasyon kurma imkânı verir, sonra bunları guard'larla reddetmek gerekir. İki ayrı sınıf ise bugün aynı alanları tekrar eder. Tek sınıf ve iki anlamlı factory ile geçerli başlangıç kombinasyonlarını açık tuttuk. Yeni hesap rolleri geldiğinde bu kararı yeniden değerlendireceğiz; şimdiden bütün muhasebe türlerini eklemedik.
-
-## Nesne oluşturmak kayıt oluşturmak mı?
-
-Hayır. Factory yalnızca bellekte nesne üretir. Aynı wallet için iki çağrı iki ayrı hesap nesnesi üretir; metot idempotent değildir ve database'den hesap aramaz. Mevcut POST /api/wallets ledger hesabı açmaz.
-
-Wallet'ın varlığı, wallet/account currency eşleşmesi, wallet başına tek hesap ve currency başına tek test fon hesabı hedefleri persistence aşamasına kalır. Posting.Create rastgele dolu bir GUID'yi hâlâ kabul eder. Bakiye güncellemesi ve event sourcing de eklenmedi.
-
-## Testte neyi kanıtladık?
-
-Önce 5 test yazıldı; tipler henüz olmadığı için ilk çalışma CS0103 ile derlenemedi. Bu compile-time Red'dir; çalışan deposit API'sinde hata reproduce edilmedi. Model eklendikten sonra tüm solution geçti:
-
-```text
-Domain             46 passed
-Application         4 passed
-IntegrationTests   17 passed
-Toplam             67 passed
+```csharp
+var fundingAccount = LedgerAccount.CreateTestFunding(
+    wallet.Currency,
+    now
+);
 ```
 
-Yeni testler iki hesabın doğru tür/ilişki/currency/UTC zamanla oluşturulmasını ve boş WalletId/null Currency reddini doğrular. IntegrationTests içindeki 3 case önceki hata-enjeksiyon kontrolleridir. Yeni account testleri database kullanmaz.
+Bu hesapta Type Asset, WalletId null olur. Null burada “wallet ilişkisi yok” demektir. Mevcut Currency modeli yalnızca TRY kabul eder.
 
-## Mülakat anlatımı
+UTC, zamanları ortak bir referansla saklamamızı sağlar. Örneğin +03:00 saat dilimindeki 15:00, aynı anın UTC gösteriminde 12:00 olur.
 
-> Wallet ile muhasebe hesabını ayırdım; çünkü para hareketinde wallet'a bağlı olmayan karşı hesaplara da ihtiyacım var. Müşteri hesabını liability, test fon hesabını asset olarak modelledim. İki anlamlı factory ile geçersiz tür/wallet kombinasyonlarının normal oluşturma yolunu kapattım. Ancak domain factory'si veritabanındaki varlık veya tekillik garantisi vermez; bunları persistence adımında ayrıca doğrulayacağım.
+## Factory metodu nedir?
 
-Sonraki adım: hesap/journal/posting mapping ve constraint'leri, ardından bir satır başarısız olduğunda bütün journal'ın rollback edilmesi. Test yatırma use-case'i bunun üzerine kurulacak.
+Factory metodu, bir nesneyi geçerli başlangıç durumuyla oluşturan metottur. Buradaki CreateForWallet ve CreateTestFunding bunun örnekleri.
 
-Kanonik Ledgerly kaynakları: `docs/domain/04-ledger-account.md`, `docs/adr/0005-ledger-account-factories.md`, `docs/journey/05-ledger-account-domain.md`.
+Çağıran kod “müşteri hesabı istiyorum” der. Factory doğru türü kendisi seçer. Böylece çağıranın ayrıca Type seçip yanlış kombinasyon göndermesine gerek kalmaz.
+
+CreateForWallet boş WalletId'yi ve null Currency'yi reddeder. CreateTestFunding de null Currency'yi reddeder. Constructor private olduğu için dış kod oluşturma kurallarını atlayarak doğrudan `new LedgerAccount(...)` çağıramaz. Alanların yalnızca get olması da hesap türünün veya ilişkisinin sonradan atanmasını engeller.
+
+## Nesne oluşturmak database'e kaydetmek mi?
+
+Hayır. Şimdiye kadarki kod yalnızca bellekte nesne oluşturuyor. Uygulama kapanınca bu nesnenin database'de kalması için ayrıca kayıt işlemi gerekir. Buna **persistence**, yani kalıcı saklama diyoruz.
+
+Factory database'e bakmadığı için gönderdiğimiz WalletId gerçekten var mı bilemez. Aynı wallet için iki kere çağırırsak iki ayrı hesap nesnesi oluşturur. “Bir wallet'ın yalnızca bir müşteri hesabı olsun” hedefini database tarafında ayrıca koruyacağız.
+
+Benzer şekilde hesap ile wallet'ın para birimlerinin aynı olmasını ve posting'in gerçekten var olan hesaba bağlanmasını da henüz garanti etmedik. Mevcut POST /api/wallets kendiliğinden ledger hesabı açmıyor.
+
+## Ne için bu tasarımı seçtik?
+
+WalletId'yi doğrudan bütün hesapların kimliği saysaydık, wallet'ı olmayan test fon hesabını modellemek zorlaşırdı. Her hesap rolü için ayrı sınıf açsaydık bugün aynı alanları tekrar edecektik. Tek LedgerAccount ve iki factory ile başlangıçtaki iki ihtiyacı karşılıyoruz.
+
+Bu bütün muhasebe hesapları için değişmez bir tasarım kararı değil. Yeni roller ortaya çıktığında hesap türü ve hesabın amacı arasındaki ayrımı yeniden değerlendireceğiz. Hesapta ayrıca bir Balance alanı veya bakiye hesaplama metodu henüz yok.
+
+## Testler hangi sorulara cevap veriyor?
+
+Test, belirli girdilerle kodu çalıştırıp beklenen sonucu otomatik kontrol eder. Burada beş soru sorduk:
+
+- Geçerli wallet bilgisiyle Liability hesabı, doğru ilişki ve UTC zaman oluşuyor mu?
+- Boş WalletId reddediliyor mu?
+- Wallet hesabında null Currency reddediliyor mu?
+- Test fon hesabı wallet bağlantısı olmadan Asset olarak oluşuyor mu?
+- Test fon hesabında null Currency reddediliyor mu?
+
+Bu testler database açmıyor. Nesnelerin oluşturulma davranışını kontrol ediyor. Database ilişkilerinin doğruluğu ayrı testlerin konusu olacak.
+
+## Uygulama ve doğrulama kaydı
+
+16 Eylül 2026'da önce bu beş test yazıldı. Sınıflar henüz olmadığı için ilk çalıştırma derlenemedi. Model eklendikten sonra tüm çözümde **46 Domain + 4 Application + 17 IntegrationTests = 67 test** geçti. IntegrationTests içindeki 3 case önceki hata-enjeksiyon kontrolleridir. Bu belge düzenlemesi yeni bir test çalıştırması değildir.
+
+Kod: `src/Ledgerly.Domain/Ledger/LedgerAccount.cs`, `LedgerAccountType.cs`. Test: `tests/Ledgerly.Domain.Tests/Ledger/LedgerAccountTests.cs`.
+
+Kanonik karar ve test kayıtları Ledgerly'deki `docs/domain/04-ledger-account.md`, `docs/adr/0005-ledger-account-factories.md`, `docs/journey/05-ledger-account-domain.md` dosyalarındadır.
+
+## Mülakatta nasıl anlatırım?
+
+> Ledger account, para hareketlerini belirli bir hesap altında izlememizi sağlar. Wallet kullanıcıya sunulan cüzdan, ledger account ise hareketlerin muhasebe tarafındaki hesabıdır. Müşteri hesabını platformun müşteriye borcu olarak Liability, test fon hesabını Asset modelledim. Oluşturma kurallarını iki factory'de topladım. Bu domain modeli; database'de hesap varlığı ve tekillik garantilerini sonraki adımda kuracağım.
+
+Sırada hesapları ve journal satırlarını kalıcı saklamak var. Birden fazla satırın ya birlikte kaydedilmesi ya da hiçbirinin kalmaması gerekir. Buna **atomik kayıt** diyoruz; bir satır başarısız olduğunda diğerlerinin geri alınmasını gerçek database testiyle inceleyeceğiz.

@@ -1,5 +1,25 @@
 # DDD ve Create Wallet Domain Modeli
 
+## DDD nedir?
+
+DDD, Domain-Driven Design: yazılımı iş alanındaki kavram ve kuralları merkeze alarak tasarlama yaklaşımıdır. Ledgerly'de önce “wallet nedir, hangi durumda oluşturulabilir?” sorusunu sorarız. Sonra bunu C# modeline dönüştürürüz.
+
+Ne için kullanılır? İş kurallarının controller ve SQL sorguları arasında dağılmasını azaltmak, konuştuğumuz kavramlarla kodun aynı şeyi anlatmasını sağlamak için.
+
+## Entity ve value object nedir?
+
+Entity, kimliğiyle takip ettiğimiz nesnedir. Bir wallet'ın bakiyesi değişse de aynı wallet olmaya devam eder; bunu Id'siyle tanırız.
+
+Value object ise taşıdığı değerle anlam kazanır. İki Currency nesnesi de TRY diyorsa iş açısından aynı para birimini ifade ederler; ayrı yaşam öykülerini izlemeyiz. Buradaki “value”, C#'ta struct olmak zorunda olduğu anlamına gelmez.
+
+## Aggregate ve aggregate root nedir?
+
+Aggregate, kurallarını birlikte koruduğumuz nesneler grubudur. Aggregate root, o grubun davranışlarına giriş noktası olan nesnedir. Örneğin journal'ın bütün posting'lerinin dengesi birlikte korunur; JournalEntry bu bütünü kontrol eder. Wallet'ın ilk modeli daha küçüktür; kendi oluşturma kurallarını root üzerinde korur.
+
+Factory, geçerli nesne oluşturan metottur. Invariant, geçerli durumda bozulmaması gereken kuraldır. Şimdi bu kavramların Wallet.Create içinde nasıl göründüğüne bakalım.
+
+## Bölümün uygulama bağlamı
+
 > Bu bölüm Create Wallet milestone'unun tarihsel anlatımıdır. Wallet persistence ve concurrency çözümü sonradan tamamlandı. [19. bölümdeki ledger domain modeli](19-double-entry-ledger-domain.md) ile toplam domain test sayısı 41 oldu; aşağıdaki 12 test ve “henüz” listesi ilk milestone'a aittir.
 
 **Durum:** Uygulandı

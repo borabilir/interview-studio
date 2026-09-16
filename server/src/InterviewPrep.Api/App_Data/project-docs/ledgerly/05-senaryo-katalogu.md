@@ -1,5 +1,11 @@
 # Senaryo Kataloğu
 
+## Senaryo nedir?
+
+Senaryo, sistemi belirli bir koşulda çalıştırıp ne olduğunu gözlediğimiz örnektir. “İki istek aynı kullanıcı için aynı anda wallet açmaya çalışırsa ne olur?” bir senaryodur.
+
+Senaryo kataloğu, inceleyeceğimiz örneklerin listesidir. Ne için kullanılır? Bir teknolojiyi sırf adını kullanmış olmak için eklemek yerine, hangi davranışı öğrenmek istediğimizi görünür yapmak için. Aşağıdaki maddeler tamamlanmış özellik listesi değildir.
+
 Bu katalog, gerçek hayat problemlerini planlanan lab çalışmalarına bağlar. Durumlar implementasyon ilerledikçe güncellenir.
 
 | ID | Problem | Ana kavramlar | Durum |

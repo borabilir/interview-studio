@@ -2,13 +2,11 @@
 
 *Digital Wallet & Payment Platform*
 
-> **Mevcut durum (2026-09-16):** Create Wallet HTTP akışı gerçek PostgreSQL ile çalışıyor. Eşzamanlı duplicate yarışı reproduce edildi ve dar exception translation ile 201/409 sonucuna çevrildi. ID ile Get Wallet query de eklendi; POST Location gerçek GET adresine işaret ediyor. JournalEntry, Posting ve LedgerAccount domain modelleri eklendi; toplam 67 test geçti. [LedgerAccount](20-ledger-account-domain.md) bölümünde wallet hesabı ile test fon hesabının ayrımı anlatılıyor. Ledger persistence, deposit, transfer ve idempotency henüz uygulanmadı. [Ledger domain adımı](19-double-entry-ledger-domain.md) bu sınırı ve kuralları anlatıyor. Ayrıntılar [concurrency çözümü](17-concurrency-lab-solution.md) ve [Get Wallet query](18-get-wallet-query.md) bölümlerinde.
-
 ## Proje ne yapıyor?
 
-Ledgerly, kullanıcıların dijital cüzdanlarını yönetebildiği ve güvenli para transferleri gerçekleştirebildiği bir ödeme/finans platformudur.
+Ledgerly, dijital cüzdan ve para hareketlerini adım adım kurarak öğrendiğimiz bir projedir. Dijital cüzdanı, uygulamada bakiyesini gördüğün ve para gönderme işlemlerini başlattığın hesap gibi düşünebilirsin. Gerçek para işletmiyoruz; küçük örneklerle yazılımın doğru davranmasını öğreniyoruz.
 
-İlk ürün akışı bilinçli olarak küçüktür:
+Hedeflediğimiz ürün akışı aşağıdaki gibi. Bütün adımlar henüz uygulanmadı; güncel durum bu bölümün sonunda:
 
 ```text
 Kullanıcı
@@ -19,6 +17,10 @@ Kullanıcı
   ├── Bakiyesini görüntüler
   └── İşlem geçmişini görüntüler
 ```
+
+## Bu notları nasıl okuyacağım?
+
+Yeni bir terim geldiğinde önce ne olduğunu, sonra ne için kullanıldığını ve basit örneğini okuyacaksın. Kod, tasarım kararları ve test kanıtı bunun ardından gelecek. Anlatım sırası [çalışma yönteminde](02-calisma-yontemi.md) tanımlı. Finansal kavramlar için [domain sözlüğü](03-domain-ve-invariantlar.md), son konular için [ledger](19-double-entry-ledger-domain.md) ve [ledger account](20-ledger-account-domain.md) bölümlerinden başlayabilirsin.
 
 ## Neden bu proje?
 
@@ -59,3 +61,7 @@ Bir özelliğin endpoint'i çalışıyorsa iş bitmiş sayılmaz. Başarı için
 ## Dokümantasyon gerçeği
 
 Bu ekranda geçen teknoloji ve pattern'ler, ilgili lab ve commit tamamlanmadıkça **uygulanmış değil, hedeflenen coverage** olarak değerlendirilmelidir.
+
+## Güncel uygulama durumu
+
+> **Mevcut durum (2026-09-16):** Create Wallet HTTP akışı gerçek PostgreSQL ile çalışıyor. Eşzamanlı duplicate yarışı reproduce edildi ve dar exception translation ile 201/409 sonucuna çevrildi. ID ile Get Wallet query de eklendi; POST Location gerçek GET adresine işaret ediyor. JournalEntry, Posting ve LedgerAccount domain modelleri eklendi; toplam 67 test geçti. [LedgerAccount](20-ledger-account-domain.md) bölümünde wallet hesabı ile test fon hesabının ayrımı anlatılıyor. Ledger persistence, deposit, transfer ve idempotency henüz uygulanmadı. [Ledger domain adımı](19-double-entry-ledger-domain.md) bu sınırı ve kuralları anlatıyor. Ayrıntılar [concurrency çözümü](17-concurrency-lab-solution.md) ve [Get Wallet query](18-get-wallet-query.md) bölümlerinde.

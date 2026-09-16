@@ -1,5 +1,25 @@
 # Teknolojileri Nasıl Seçtik?
 
+## Bu araçlar ne yapıyor?
+
+Bir API yazarken kodu yazdığımız dil, kodu çalıştıran ortam ve veriyi sakladığımız yer farklı görevler üstlenir. İsimleri ezberlemek yerine basit akışı düşünelim: istek gelir, C# kodu çalışır, gerekli veri database'e kaydedilir, cevap döner.
+
+| Kavram veya araç | Basit anlamı | Bu projedeki işi |
+|---|---|---|
+| C# | Kod yazdığımız dil | Wallet kurallarını ve istek akışını ifade etmek |
+| .NET runtime | Derlenmiş .NET kodunu çalıştıran ortam | API'yi çalıştırmak |
+| .NET SDK | Derleme ve geliştirme araçları | dotnet build ve dotnet test komutlarını çalıştırmak |
+| ASP.NET Core | HTTP uygulaması geliştirme çatısı | İstekleri karşılamak ve cevap üretmek |
+| PostgreSQL | Veriyi tablolarda saklayan database | Uygulama kapansa da wallet kayıtlarını korumak |
+| EF Core | C# nesneleri ile database işlemleri arasında çalışan kütüphane | Nesneleri sorgulamak ve kaydetmek |
+| Npgsql | PostgreSQL ile iletişimi sağlayan .NET sağlayıcısı | EF Core'un PostgreSQL'e bağlanmasını sağlamak |
+| xUnit | Otomatik test çalıştıran kütüphane | Beklenen davranışları doğrulamak |
+| Docker Compose | Container'ların nasıl başlatılacağını dosyayla tanımlayan araç | Lokal PostgreSQL'i ortak ayarlarla başlatmak |
+
+Container'ın nasıl çalıştığını [Docker bölümünde](14-docker-ve-lokal-altyapi.md) açıyoruz. Aşağıdaki seçim gerekçeleri bu görevleri bilerek okunmalı. LTS, seçilen sürümün uzun süre desteklenen sürüm ailesinde olduğunu belirtir.
+
+## Bölümün uygulama bağlamı
+
 Teknoloji seçiminde “projede mümkün olduğunca çok araç olsun” yaklaşımı kullanılmadı. Her araç; çözdüğü problem, öğrenme değeri, operasyon maliyeti ve alternatifleri üzerinden değerlendirildi.
 
 ## Başlangıç teknoloji seti

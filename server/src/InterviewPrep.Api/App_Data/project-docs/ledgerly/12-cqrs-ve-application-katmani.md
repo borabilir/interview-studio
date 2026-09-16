@@ -1,5 +1,32 @@
 # CQRS ve Create Wallet Application Akışı
 
+## CQRS nedir?
+
+CQRS, bir şeyi değiştiren isteklerle bilgi okuyan istekleri ayrı modeller ve işlem yollarıyla ele alma yaklaşımıdır. Açılımı Command Query Responsibility Segregation'dır.
+
+```text
+“Yeni wallet oluştur.” → Command: değişiklik ister.
+“Bu wallet'ı göster.”  → Query: bilgi ister.
+```
+
+Ne için kullanılır? Okuma ve değiştirme işlemlerinin ihtiyaçları farklı olabilir. Yeni wallet oluştururken kural kontrolü ve kayıt gerekir; wallet gösterirken mevcut bilgiyi okumak yeterlidir. Bunları ayırmak kodun amacını görünür yapar. Ayrı database kullanmak zorunlu değildir.
+
+## Command, query ve handler nedir?
+
+Command yapılması istenen işin bilgisidir; kendi başına işi yapmaz. Query öğrenmek istediğimiz şeyin bilgisidir. Handler ise o isteği alıp gereken adımları çalıştıran kod parçasıdır.
+
+CreateWalletCommand owner ve currency bilgisini taşır. CreateWalletHandler bu bilgilerle wallet oluşturma akışını yürütür. GetWalletQuery bir wallet kimliği taşır; GetWalletHandler o kaydı arar. Result, handler'ın döndürdüğü sonuç modelidir.
+
+## Repository ve Unit of Work nedir?
+
+Repository, uygulamanın kayıtları bulmak veya eklemek için kullandığı arayüzdür. “Bu wallet var mı?” diye sorabiliriz; çağıran kod SQL'in ayrıntısını bilmek zorunda kalmaz.
+
+Unit of Work, bir işlem sırasında biriken değişikliklerin kaydedilmesini birlikte yöneten yapıdır. Bizde Add, wallet'ı kaydedilmek üzere hazırlar; SaveChangesAsync kaydetme adımıdır. Böylece her ekleme metodunun içinde ayrı kayıt başlatmak zorunda kalmayız.
+
+Interface bir sözleşmedir: hangi metotların sunulacağını söyler. Application bu sözleşmeye dayanır; Infrastructure onu EF Core/PostgreSQL ile gerçekleştirir. “Port” bu sınırdaki sözleşmeye, “adapter” onu belirli teknolojiyle gerçekleştiren parçaya verilen isimdir.
+
+## Bölümün uygulama bağlamı
+
 **Durum:** Create Wallet command ve Get Wallet query aynı PostgreSQL üzerinde uygulandı
 **Tarih:** 2026-09-13
 
@@ -51,7 +78,7 @@ public sealed record CreateWalletCommand(
 
 Command dış sınırdan gelen niyeti ve ham veriyi taşır. `CurrencyCode` burada `string`dir; doğrulanmış domain tipi handler içinde `Currency.FromCode` ile oluşturulur.
 
-Command'ın `record` olması onu immutable ve değer bazlı bir mesaj modeli yapar. Command entity değildir ve kimliğe dayalı bir yaşam döngüsü taşımaz.
+Buradaki positional `record`, bu string/Guid alanları için değer bazlı karşılaştırma ve oluşturma sonrası normal atamaya kapalı özellikler sağlar. Her record içindeki bütün nesneleri kendiliğinden değiştirilemez yapmaz. Command entity değildir ve kimliğe dayalı bir yaşam döngüsü taşımaz.
 
 ## Handler
 
@@ -75,7 +102,7 @@ Handler iş kuralını yeniden yazmaz. Geçerli wallet oluşturma sorumluluğunu
 public sealed record CreateWalletResult(Guid WalletId);
 ```
 
-Command sonucunda tam bir read model döndürmek yerine oluşturulan kaynağın kimliği döndürülür. API bu kimlikle `201 Created` ve gerçek GET route'una işaret eden `Location` header üretir. Wallet detayını okuma ihtiyacı ayrı bir query use-case'i ile ele alınacaktır.
+Command sonucunda tam bir read model döndürmek yerine oluşturulan kaynağın kimliği döndürülür. API bu kimlikle `201 Created` ve gerçek GET route'una işaret eden `Location` header üretir. Wallet detayını okuma ihtiyacı ayrı GetWallet query akışıyla ele alınır.
 
 Alternatif olarak handler doğrudan `Guid` döndürebilirdi. İsimlendirilmiş result tipi, use-case sözleşmesini daha açık kılar ve ileride metadata eklenmesine alan bırakır.
 
@@ -118,7 +145,9 @@ public interface IUnitOfWork
 
 Bu ilk use-case'te tek repository olduğu için fazla görünebilir. Transfer gibi birden fazla değişikliğin aynı transaction içinde atomik kaydedileceği use-case'lerde transaction sınırını repository metodunun içine gizlememek önem kazanacaktır.
 
-## TimeProvider neden enjekte edildi?
+## TimeProvider nedir, neden enjekte edildi?
+
+TimeProvider, “şu an saat kaç?” sorusunu sorduğumuz .NET nesnesidir. Dependency injection, sınıfın bu nesneyi kendi içinde üretmek yerine dışarıdan almasıdır. Böylece testte sabit saat sağlayan bir nesne verebiliriz.
 
 Handler doğrudan `DateTimeOffset.UtcNow` kullansaydı test her çalışmada farklı sonuç üretirdi. .NET'in `TimeProvider` abstraction'ı production'da gerçek zamanı, testte sabit zamanı kullanmamızı sağlar:
 
@@ -157,7 +186,9 @@ Alternatifler:
 
 Başlangıç için custom exception seçildi. Result yaklaşımı daha fazla hata türü oluştuğunda yeniden değerlendirilecektir.
 
-## Neden MediatR kullanmadık?
+## MediatR nedir, neden henüz kullanmadık?
+
+MediatR, bir isteği uygun handler'a yönlendirmeyi sağlayan .NET kütüphanesidir. Controller handler'ı doğrudan çağırmak yerine isteği bu aracıya verebilir. Pipeline behavior, handler öncesi/sonrası ortak işleri çalıştırdığımız adımdır; örneğin birden fazla isteğe aynı doğrulama akışını uygulamak.
 
 Command ve handler ayrımı için MediatR zorunlu değildir. Şu anda handler doğrudan çağrılabilir. Pipeline behavior, merkezi validation veya çok sayıda handler dispatch ihtiyacı ortaya çıkarsa MediatR ya da alternatifleri trade-off ile değerlendirilecektir.
 

@@ -1,5 +1,25 @@
 # Test Stratejisi ve TDD Yaklaşımı
 
+## Otomatik test nedir?
+
+Test, belirli koşullarda kodu çalıştırıp beklediğimiz sonucun oluştuğunu kontrol eden koddur. Örneğin “boş kullanıcı kimliğiyle wallet oluşturulamamalı” deriz; test bu girdiyi verir ve işlemin reddedildiğine bakar.
+
+Her değişiklikten sonra bütün örnekleri elle denemek yerine testleri çalıştırabiliriz. Testlerin geçmesi bütün olası hataların bittiğini değil, yazdığımız kontrollerin geçtiğini gösterir.
+
+## TDD nedir, ne için kullanılır?
+
+TDD, Test-Driven Development: geliştirmeyi testle yönlendirme yaklaşımıdır. Önce beklediğimiz davranışı testte ifade ederiz, sonra o davranışı sağlayan kodu yazarız. Örneğin wallet daha yokken “geçerli owner ile oluşturulduğunda bakiyesi sıfır olsun” testini yazabiliriz.
+
+Üç adımın adı Red, Green, Refactor: önce testin doğru nedenle başarısız olduğunu gör, sonra geçmesini sağla, ardından davranışı bozmadan kodu düzenle. xUnit bu testleri çalıştırdığımız araçtır; TDD ise çalışma yöntemidir.
+
+## Domain, Application ve integration testi neye bakar?
+
+Domain testi nesnenin kendi kuralına bakar. Application testi bir isteğin gereken adımları izleyip izlemediğine bakar; database yerine bellekte çalışan bir yardımcı kullanabilir. Integration testi parçaların birlikte çalışmasını sınar; Ledgerly'de gerçek PostgreSQL'e kayıt ve gerçek HTTP pipeline'ı bu gruptadır.
+
+Bu yüzden fake repository ile geçen bir test, kaydın PostgreSQL'e yazıldığını kanıtlamaz. Aşağıda her test türünün sınırını ayrı ele alıyoruz.
+
+## Bölümün uygulama bağlamı
+
 **Durum:** Accepted
 **Tarih:** 2026-09-03
 **Son güncelleme:** 2026-09-13

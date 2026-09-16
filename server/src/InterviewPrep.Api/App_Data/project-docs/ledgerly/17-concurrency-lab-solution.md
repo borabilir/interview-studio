@@ -1,5 +1,23 @@
 # Concurrent Create Wallet — Unique Violation'ı 409'a Çevirmek
 
+## Exception translation nedir?
+
+Exception, kod çalışırken işlemin olağan şekilde devam edemediğini bildiren hata nesnesidir. Exception translation, bir katmanın teknik hatasını diğer katmanın anlayacağı anlamlı hataya çevirmektir.
+
+Örneğin database “unique kuralı ihlal edildi” der. Uygulamamız bunun hangi kurala ait olduğunu anlayıp “bu kullanıcı ve para birimi için wallet zaten var” diyebilir. API de istemciye 409 Conflict döndürür.
+
+## Unique constraint ne işe yarar?
+
+Unique constraint, seçtiğimiz değerin veya değer birleşiminin tekrarlanmasını database seviyesinde engeller. Ledgerly'de unique index, aynı owner/currency birleşimine ikinci wallet yazılmasını önler. İki istek de önce “yok” görse bile database ikinci kaydı kabul etmez.
+
+## Neden hatanın ayrıntısına bakıyoruz?
+
+Her database hatası duplicate değildir. Bağlantı kopmuş veya başka bir kural bozulmuş olabilir. SQLSTATE, PostgreSQL'in hata kategorisini belirten kodudur; 23505 unique ihlalini belirtir. ConstraintName ise hangi kuralın ihlal edildiğini söyler. Biz ikisini birlikte kontrol ederek yalnızca beklediğimiz wallet duplicate durumunu çeviriyoruz.
+
+DbUpdateException EF Core'un kayıt hatasıdır. İçindeki PostgresException sağlayıcı ayrıntısını taşır. WalletAlreadyExistsException uygulamanın anladığı karşılıktır. Aşağıda bu çevirinin kodda nerede yapıldığını göreceğiz.
+
+## Bölümün uygulama bağlamı
+
 **Durum:** Uygulandı ve gerçek PostgreSQL ile doğrulandı\
 **Tarih:** 2026-09-15\
 **Önceki bölüm:** [16 — Yarışı reproduce etmek](16-concurrency-lab-reproduce.md)\

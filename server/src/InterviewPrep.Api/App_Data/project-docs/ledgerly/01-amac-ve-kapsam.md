@@ -1,5 +1,11 @@
 # Amaç ve Kapsam
 
+## Kapsam ne demek?
+
+Kapsam, bu projede hangi işleri yapmayı hedeflediğimiz ve hangilerini şimdilik dışarıda tuttuğumuzdur. Örneğin test bakiyesi yatırmayı öğrenmek istiyoruz; gerçek kartlardan ödeme çekmek bu çalışmanın hedefi değil. Böylece aynı anda bütün ödeme sektörünü modellemeye çalışmadan küçük bir akışı anlayabiliyoruz.
+
+Aşağıdaki “ilk sürüm” tablosu hedef kapsamı anlatır; bütün satırların bugün çalıştığını söylemez. Güncel durum [genel bakışın sonunda](00-genel-bakis.md) tutulur.
+
 ## Ürün amacı
 
 Kullanıcıların dijital cüzdan oluşturabildiği, para yatırabildiği, çekebildiği ve başka bir cüzdana para gönderebildiği güvenilir bir ödeme çekirdeği geliştirmek.

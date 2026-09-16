@@ -1,5 +1,23 @@
 # Domain ve Invariant'lar
 
+## Domain nedir?
+
+Domain, yazılımın çözmeye çalıştığı iş alanıdır. Ledgerly'de bu alan dijital cüzdan ve para hareketleri. “Bir kullanıcı kaç cüzdan açabilir?”, “Yetersiz bakiyeyle para gönderebilir mi?” gibi sorular bu alanın kurallarını belirler.
+
+Domain modeli ise bu kavram ve kuralların koddaki karşılığıdır. Wallet cüzdanı, Currency para birimini temsil eder. Modelin amacı gerçek hayattaki her ayrıntıyı kopyalamak değil, uygulamanın doğru karar vermesi için gerekli bilgiyi taşımaktır.
+
+## Invariant nedir, ne için kullanılır?
+
+Invariant, geçerli kabul ettiğimiz durumda bozulmaması gereken kuraldır. Örneğin “bir kullanıcının aynı para biriminde en fazla bir wallet'ı olabilir.” İstek tek başına da gelse, iki istek aynı anda da gelse bu kural korunmalıdır.
+
+Kurala isim vermek neyi test edeceğimizi netleştirir. “Sistem çalışıyor” yerine “aynı owner ve currency ile iki wallet oluşamıyor” diyebiliriz. Bir invariant'ı tanımlamak, onu henüz uyguladığımız anlamına gelmez; aşağıda hedef kurallar ile mevcut uygulama durumunu ayırıyoruz.
+
+## Ubiquitous language nedir?
+
+İşi konuşurken, kod yazarken ve test oluştururken aynı kavrama aynı adı vermektir. Bu projede cüzdana her yerde Wallet dersek konuşmayla kod arasında çeviri yapmamız azalır. Aşağıdaki sözlük bu ortak dilin başlangıcıdır.
+
+## Bölümün uygulama bağlamı
+
 > **Uygulama sınırı (2026-09-16):** Dengeli journal, bellekte immutable posting ve [LedgerAccount modeli](20-ledger-account-domain.md) uygulandı. Kalıcı ledger, negatif bakiye koruması, idempotency ve reversal aşağıda hedef olarak anlatılır; henüz uygulanmadı. [Güncel domain adımı](19-double-entry-ledger-domain.md).
 
 ## Başlangıç ubiquitous language

@@ -1,5 +1,28 @@
 # Get Wallet — İlk Query ve Aynı Veritabanında CQRS
 
+## Query nedir, ne için kullanılır?
+
+Query, mevcut bilgiyi okumak için gönderdiğimiz istektir. “Kimliği şu olan wallet'ın bakiyesi ve durumu ne?” sorusu bir query örneğidir. Wallet oluşturma veya para gönderme niyeti taşımaz.
+
+```text
+GetWalletQuery(walletId)
+  → Kaydı bul
+  → Varsa bilgilerini döndür
+  → Yoksa bulunamadığını bildir
+```
+
+Command değişiklik ister, query bilgi ister. Bu sorumlulukları ayırmaya CQRS diyoruz. Query handler, okuma isteğini yerine getiren kod; result ise elde edilen bilgiyi taşıyan sonuçtur. HTTP'de bu sorguyu `GET /api/wallets/{walletId}` adresi üzerinden çağırıyoruz.
+
+## Tracking ve AsNoTracking nedir?
+
+Tracking, EF Core'un okuduğu nesnelerin değişikliklerini izleyip daha sonra kaydedebilmesidir. AsNoTracking bu sorgudan gelen nesneleri o takibe eklememesini ister. Sadece göstereceğimiz bilgiyi okurken kullanırız. Başka kodun veya başka isteğin database'i değiştirmesini engelleyen bir kilit değildir.
+
+## Location header nedir?
+
+HTTP cevabına eklenen bir adres bilgisidir. Yeni wallet oluşturulunca “oluşturduğun kaynağa buradan ulaşabilirsin” demek için kullanıyoruz. POST cevabındaki bu adresi GET ile açıp wallet'ı okuyabiliriz.
+
+## Bölümün uygulama bağlamı
+
 **Durum:** Uygulandı ve gerçek PostgreSQL ile doğrulandı
 
 **Tarih:** 2026-09-15
@@ -29,7 +52,7 @@ GET Location
 
 Kayıt yoksa GET, 404 ProblemDetails döner. Bu aşamada deposit, transfer veya ledger eklenmedi.
 
-## 2. Query nedir?
+## 2. Command ve query kodda nasıl görünüyor?
 
 Command sisteme bir değişiklik yaptırma niyetidir. Query bilgi istemektir.
 
@@ -150,7 +173,7 @@ API'nin dış sözleşmesi GetWalletResponse'tur. Application sonucu ile HTTP mo
 }
 ```
 
-Domain enum'u Application içinde kullanılabilir; API status'u açıkça string'e çevirir. Böylece EF veya domain entity'sini doğrudan serialize etmiyoruz. Balance şu an wallet tablosundaki değerdir; ledger henüz uygulanmadı.
+Domain enum'u Application içinde kullanılabilir; API status'u açıkça string'e çevirir. Böylece EF veya domain entity'sini doğrudan serialize etmiyoruz. Balance wallet tablosundaki değerdir; ledger domain modelleri sonraki bölümlerde eklendi, fakat ledger'dan bakiye üretme henüz uygulanmadı.
 
 ## 9. Location header neden şimdi eklendi?
 

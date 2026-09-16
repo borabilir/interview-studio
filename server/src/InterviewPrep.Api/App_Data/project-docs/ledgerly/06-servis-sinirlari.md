@@ -1,5 +1,23 @@
 # Servis Sınırlarını Nasıl Belirledik?
 
+## Servis sınırı nedir?
+
+Servis sınırı, bir uygulama parçasının hangi işi üstlendiğini ve hangi verilerden sorumlu olduğunu belirler. Bir iş yerinde “ödemeyi kim yapar, müşteriye kim haber verir?” diye görevleri ayırmaya benzer.
+
+Ledgerly'de para transferini yapmak ile “transfer tamamlandı” e-postası göndermek farklı işlerdir. Bu işleri ayrı düşünmek sorumlulukları anlamamızı sağlar. Ama ayrı düşünmek, hemen ayrı çalışan uygulamalar kurmak zorunda olduğumuz anlamına gelmez.
+
+## Bounded context nedir?
+
+Bir modelin ve kullandığı kelimelerin belirli bir anlam taşıdığı sınırdır. Örneğin finans tarafında “tamamlandı”, para hareketinin kaydedilmesi anlamına gelirken bildirim tarafında mesajın gönderilmesi anlamına gelebilir. Bu iki durumun kurallarını tek bir modele sıkıştırmamak için sınırlarını belirleriz.
+
+Bounded context bir iş/model sınırıdır; mikroservis ise ayrı çalıştırıp yayınlayabildiğimiz bir uygulama parçasıdır. Aynı uygulama içinde birden fazla model sınırı bulunabilir. Bu yüzden önce işleri ve kuralları anlamaya çalışacağız.
+
+## Birlikte tamamlanması gereken işler ne demek?
+
+Transferde gönderenin azalması ve alıcının artması birlikte başarılı olmalıdır. Sadece birinin olması geçerli sonuç değildir. Bu “ya hepsi ya hiçbiri” özelliğine atomiklik deriz. Transaction, database işlemlerini böyle bir bütün olarak ele almamızı sağlar. Servisleri ayırırken bu bütünlüğü nasıl koruyacağımızı da düşünürüz.
+
+## Bölümün uygulama bağlamı
+
 Servis sınırlarını entity veya veritabanı tablolarına göre değil, **business capability**, **veri sahipliği** ve **tutarlılık ihtiyacına** göre belirliyoruz. İlk harita kesin bir fiziksel mimari değil; geliştirme boyunca kanıtlarla doğrulanacak bounded context hipotezidir.
 
 ## Kullandığımız sorular

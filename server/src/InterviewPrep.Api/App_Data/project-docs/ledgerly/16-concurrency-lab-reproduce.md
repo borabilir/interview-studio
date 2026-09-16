@@ -1,5 +1,19 @@
 # Concurrency Lab — Duplicate Wallet Yarışını Reproduce Etmek
 
+## Concurrency ve yarış durumu nedir?
+
+Concurrency, birden fazla işin ilerleyişinin zaman içinde örtüşmesidir. Aynı anda iki CPU çekirdeğinde çalışmaları şart değildir; bir iş database cevabı beklerken diğeri ilerleyebilir.
+
+Yarış durumu, işlerin hangi sırayla ilerlediğinin sonucu etkileyebilmesidir. İki kişinin aynı boş koltuğa bakıp ikisinin de “boş” demesini düşün. Bakmak, koltuğu kendine ayırmak değildir. Bizim iki isteğimiz de aynı wallet için “yok” sonucunu alıp eklemeye çalışabilir.
+
+## Reproduce ve deterministik test ne demek?
+
+Reproduce, problemi yeniden oluşturmak demektir. Deterministik test ise kritik koşulu şansa bırakmadan kurar. Sadece iki istek başlatmak, ikisinin de kayıt eklenmeden önce kontrol yapmasını garanti etmez.
+
+Gate veya bariyer, testte kurduğumuz bekleme noktasıdır: ilk istek kontrolünü bitirince bekler; ikinci de bitirince ikisi bırakılır. İstekleri test başlatır, gate yalnızca belirli noktada ilerlemelerini koordine eder. Bu bir üretim çözümü değil, problemi görünür kılan test aracıdır.
+
+## Bölümün uygulama bağlamı
+
 **Durum:** Reproduce aşamasının tarihsel kaydı; çözüm 2026-09-15'te tamamlandı\
 **Tarih:** 2026-09-14
 

@@ -1,5 +1,11 @@
 # Evrim Yol Haritası
 
+## Bu yol haritası ne işe yarar?
+
+Yol haritası hangi konuyu hangi ihtiyaçtan sonra öğreneceğimizi gösterir. Önce bir cüzdan oluşturup okuyacağız; sonra para hareketini doğru kaydedeceğiz. Bu temel çalışınca iki isteğin aynı anda gelmesini ve sistem parçalarının arızalanmasını inceleyeceğiz.
+
+Aşağıdaki ileri aşama isimlerini şimdiden ezberlemek gerekmiyor. Her konuya geldiğimizde önce “nedir?” sorusunu örnekle cevaplayacağız. Bir aşamadaki liste, o yeteneklerin tamamlandığı anlamına gelmez.
+
 Yol haritası takvim değil, öğrenme sırasıdır. Bir aşama yalnızca kod yazıldığında değil; test, lab ve dokümantasyonu tamamlandığında bitmiş sayılır.
 
 ## Aşama 0 — Inception
