@@ -1,5 +1,7 @@
 # Double-entry Ledger: İlk Domain Modeli
 
+> Sonraki adım (2026-09-16): [LedgerAccount domain modeli](20-ledger-account-domain.md) tamamlandı. Bu bölüm önceki milestone'un anlatımıdır; ledger persistence henüz yok.
+
 **Durum (2026-09-15):** JournalEntry, Posting ve PostingDirection domain seviyesinde uygulandı. Ledger database tabloları, deposit ve transfer henüz yok.
 
 ## Hangi problemi çözüyoruz?

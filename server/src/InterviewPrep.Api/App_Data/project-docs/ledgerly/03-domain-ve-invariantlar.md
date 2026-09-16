@@ -1,6 +1,6 @@
 # Domain ve Invariant'lar
 
-> **Uygulama sınırı (2026-09-15):** Dengeli journal ve bellekte immutable posting modeli uygulandı. Kalıcı ledger, negatif bakiye koruması, idempotency ve reversal aşağıda hedef olarak anlatılır; henüz uygulanmadı. [Güncel domain adımı](19-double-entry-ledger-domain.md).
+> **Uygulama sınırı (2026-09-16):** Dengeli journal, bellekte immutable posting ve [LedgerAccount modeli](20-ledger-account-domain.md) uygulandı. Kalıcı ledger, negatif bakiye koruması, idempotency ve reversal aşağıda hedef olarak anlatılır; henüz uygulanmadı. [Güncel domain adımı](19-double-entry-ledger-domain.md).
 
 ## Başlangıç ubiquitous language
 

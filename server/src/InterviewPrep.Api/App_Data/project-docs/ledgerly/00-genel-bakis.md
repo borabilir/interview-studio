@@ -2,7 +2,7 @@
 
 *Digital Wallet & Payment Platform*
 
-> **Mevcut durum (2026-09-15):** Create Wallet HTTP akışı gerçek PostgreSQL ile çalışıyor. Eşzamanlı duplicate yarışı reproduce edildi ve dar exception translation ile 201/409 sonucuna çevrildi. ID ile Get Wallet query de eklendi; POST Location gerçek GET adresine işaret ediyor. JournalEntry ve Posting domain modeli de eklendi; toplam 62 test geçti. Ledger persistence, deposit, transfer ve idempotency henüz uygulanmadı. [Ledger domain adımı](19-double-entry-ledger-domain.md) bu sınırı ve kuralları anlatıyor. Ayrıntılar [concurrency çözümü](17-concurrency-lab-solution.md) ve [Get Wallet query](18-get-wallet-query.md) bölümlerinde.
+> **Mevcut durum (2026-09-16):** Create Wallet HTTP akışı gerçek PostgreSQL ile çalışıyor. Eşzamanlı duplicate yarışı reproduce edildi ve dar exception translation ile 201/409 sonucuna çevrildi. ID ile Get Wallet query de eklendi; POST Location gerçek GET adresine işaret ediyor. JournalEntry, Posting ve LedgerAccount domain modelleri eklendi; toplam 67 test geçti. [LedgerAccount](20-ledger-account-domain.md) bölümünde wallet hesabı ile test fon hesabının ayrımı anlatılıyor. Ledger persistence, deposit, transfer ve idempotency henüz uygulanmadı. [Ledger domain adımı](19-double-entry-ledger-domain.md) bu sınırı ve kuralları anlatıyor. Ayrıntılar [concurrency çözümü](17-concurrency-lab-solution.md) ve [Get Wallet query](18-get-wallet-query.md) bölümlerinde.
 
 ## Proje ne yapıyor?
 
