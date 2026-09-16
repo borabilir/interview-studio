@@ -18,7 +18,7 @@ Kurala isim vermek neyi test edeceğimizi netleştirir. “Sistem çalışıyor�
 
 ## Bölümün uygulama bağlamı
 
-> **Uygulama sınırı (2026-09-16):** Dengeli journal, bellekte immutable posting ve [LedgerAccount modeli](20-ledger-account-domain.md) uygulandı. Kalıcı ledger, negatif bakiye koruması, idempotency ve reversal aşağıda hedef olarak anlatılır; henüz uygulanmadı. [Güncel domain adımı](19-double-entry-ledger-domain.md).
+> **Uygulama sınırı (2026-09-16):** Dengeli journal, bellekte immutable posting ve [LedgerAccount modeli](20-ledger-account-domain.md) uygulandı. [Ledger persistence](21-ledger-persistence-ve-atomiklik.md) ile tablolar ve atomik kayıt da eklendi. Kalıcı append-only koruma, negatif bakiye kontrolü, idempotency ve reversal henüz uygulanmadı. [Güncel domain adımı](19-double-entry-ledger-domain.md).
 
 ## Başlangıç ubiquitous language
 

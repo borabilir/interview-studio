@@ -202,3 +202,7 @@ Kod: `src/Ledgerly.Domain/Ledger/JournalEntry.cs`, `Posting.cs`, `PostingDirecti
 ## Mülakatta nasıl anlatırım?
 
 > Ledger para hareketlerinin kayıt defteri; journal bir olayın bütünü, posting onun bir hesabı etkileyen satırıdır. Ledgerly'de aynı olaya ait debit ve credit toplamlarını journal oluşturulurken eşit olmak zorunda tuttum. Satırları ve koleksiyonu değiştirilemez hâle getirerek bu dengenin dışarıdan bozulmasını engelledim. Şu an doğruladığım bellekteki domain kuralları; kalıcı kayıt ve bakiye kontrolü sonraki adımlar.
+
+## Sonraki milestone
+
+Bu bölüm domain adımının anlatımıdır. 16 Eylül 2026'da [ledger persistence ve atomik kayıt](21-ledger-persistence-ve-atomiklik.md) tamamlandı; hesaplar ve journal artık repository üzerinden saklanabiliyor. Otomatik hesap oluşturma ve para yatırma API'si hâlâ yok. Güncel toplam 90 test; yukarıdaki test sayısı bu bölümün tamamlandığı adıma aittir.

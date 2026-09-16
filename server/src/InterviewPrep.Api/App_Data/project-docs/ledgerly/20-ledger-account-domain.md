@@ -155,3 +155,7 @@ Kanonik karar ve test kayıtları Ledgerly'deki `docs/domain/04-ledger-account.m
 > Ledger account, para hareketlerini belirli bir hesap altında izlememizi sağlar. Wallet kullanıcıya sunulan cüzdan, ledger account ise hareketlerin muhasebe tarafındaki hesabıdır. Müşteri hesabını platformun müşteriye borcu olarak Liability, test fon hesabını Asset modelledim. Oluşturma kurallarını iki factory'de topladım. Bu domain modeli; database'de hesap varlığı ve tekillik garantilerini sonraki adımda kuracağım.
 
 Sırada hesapları ve journal satırlarını kalıcı saklamak var. Birden fazla satırın ya birlikte kaydedilmesi ya da hiçbirinin kalmaması gerekir. Buna **atomik kayıt** diyoruz; bir satır başarısız olduğunda diğerlerinin geri alınmasını gerçek database testiyle inceleyeceğiz.
+
+## Sonraki milestone
+
+Bu bölüm domain adımının anlatımıdır. 16 Eylül 2026'da [ledger persistence ve atomik kayıt](21-ledger-persistence-ve-atomiklik.md) tamamlandı; hesaplar ve journal artık repository üzerinden saklanabiliyor. Otomatik hesap oluşturma ve para yatırma API'si hâlâ yok. Güncel toplam 90 test; yukarıdaki test sayısı bu bölümün tamamlandığı adıma aittir.

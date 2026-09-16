@@ -21,7 +21,7 @@ Yol haritası takvim değil, öğrenme sırasıdır. Bir aşama yalnızca kod ya
 
 ## Aşama 1 — Basit çalışan çekirdek
 
-**Durum (2026-09-16):** Devam ediyor. Create Wallet, Get Wallet (ID ile okuma), PostgreSQL ve HTTP testleri tamamlandı. POST Location üzerinden yeni wallet okunabiliyor. Küçük bir concurrency ön lab'ında aynı wallet'ın eşzamanlı oluşturulması 201/409 ile doğrulandı; bu, Aşama 2'deki double-spending veya idempotency çalışmalarının tamamlandığı anlamına gelmez. Double-entry ledger için dengeli JournalEntry/Posting domain modeli ve 29 yeni domain testi tamamlandı; [19. bölüm](19-double-entry-ledger-domain.md). LedgerAccount domain modeli ve 5 yeni testi de tamamlandı; [20. bölüm](20-ledger-account-domain.md). Hesap/journal/posting persistence, test bakiyesi yatırma ve transfer sıradadır. Toplam 67 test geçti.
+**Durum (2026-09-16):** Devam ediyor. Create Wallet, Get Wallet (ID ile okuma), PostgreSQL ve HTTP testleri tamamlandı. POST Location üzerinden yeni wallet okunabiliyor. Küçük bir concurrency ön lab'ında aynı wallet'ın eşzamanlı oluşturulması 201/409 ile doğrulandı; bu, Aşama 2'deki double-spending veya idempotency çalışmalarının tamamlandığı anlamına gelmez. Double-entry ledger için dengeli JournalEntry/Posting domain modeli ve 29 yeni domain testi tamamlandı; [19. bölüm](19-double-entry-ledger-domain.md). LedgerAccount domain modeli ve 5 yeni testi de tamamlandı; [20. bölüm](20-ledger-account-domain.md). Hesap/journal/posting persistence ve atomik kayıt deneyi tamamlandı; [21. bölüm](21-ledger-persistence-ve-atomiklik.md). Otomatik hesap hazırlama, test bakiyesi yatırma ve transfer sıradadır. Toplam 90 test geçti.
 
 - Tek ASP.NET Core uygulaması
 - İlişkisel veritabanı
