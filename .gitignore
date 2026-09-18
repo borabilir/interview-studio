@@ -16,7 +16,10 @@ server/**/*.db-shm
 server/**/*.db-wal
 .idea/
 .vs/
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
 .agents/
 .DS_Store
 Thumbs.db

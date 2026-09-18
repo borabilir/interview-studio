@@ -1,0 +1,76 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Interview Studio: Full Stack",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "Interview Studio: build API",
+      "program": "${workspaceFolder}/server/src/InterviewPrep.Api/bin/Debug/net8.0/InterviewPrep.Api.dll",
+      "cwd": "${workspaceFolder}/server/src/InterviewPrep.Api",
+      "launchSettingsProfile": "http",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5187"
+      },
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "startDebugging",
+        "pattern": "\\bNow listening on:\\s+(http://\\S+)",
+        "name": "Interview Studio: Frontend",
+        "killOnServerStop": true
+      }
+    },
+    {
+      "name": "Interview Studio: API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "Interview Studio: build API",
+      "program": "${workspaceFolder}/server/src/InterviewPrep.Api/bin/Debug/net8.0/InterviewPrep.Api.dll",
+      "cwd": "${workspaceFolder}/server/src/InterviewPrep.Api",
+      "launchSettingsProfile": "http",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5187"
+      },
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(http://\\S+)",
+        "uriFormat": "%s/swagger"
+      }
+    },
+    {
+      "name": "Interview Studio: Frontend",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/vite/bin/vite.js",
+      "args": [
+        "--host",
+        "localhost",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "NO_COLOR": "1"
+      },
+      "console": "internalConsole",
+      "outputCapture": "std",
+      "skipFiles": [
+        "<node_internals>/**",
+        "${workspaceFolder}/node_modules/**"
+      ],
+      "serverReadyAction": {
+        "action": "debugWithChrome",
+        "pattern": "Local:\\s+(http://localhost:5173/)",
+        "uriFormat": "%s",
+        "webRoot": "${workspaceFolder}",
+        "killOnServerStop": true
+      }
+    }
+  ]
+}

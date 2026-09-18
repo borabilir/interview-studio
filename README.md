@@ -58,6 +58,24 @@ npm run dev
 - Swagger: `http://localhost:5187/swagger`
 - Health: `http://localhost:5187/api/health`
 
+## VS Code ile F5 debug
+
+VS Code'da repository kökünü (`interview-studio`) açın. İlk kurulumda `npm install` çalıştırın ve önerilen C# eklentilerini yükleyin. API `net8.0` hedefler; .NET 8 SDK, gerekli ASP.NET Core 8 runtime'ını da içerir. Daha yeni bir SDK kullanıyorsanız ASP.NET Core 8 runtime'ı ayrıca kurulu olmalıdır.
+
+Run and Debug menüsündeki profiller:
+
+- **Interview Studio: Full Stack**: API'yi derleyip debugger ile başlatır. API 5187 portunda hazır olduğunda Vite'ı başlatır; Vite hazır olduğunda Chrome debugger'ı 5173 adresini açar. C# ve React/TypeScript breakpoint'leri kullanılabilir.
+- **Interview Studio: API**: Yalnızca API'yi başlatır ve Swagger'ı açar.
+- **Interview Studio: Frontend**: Vite ve Chrome debugger'ını başlatır. API'yi ayrıca çalıştırın.
+
+Full Stack profilini seçip **F5** tuşuna basabilirsiniz. API oturumunu durdurmak bağlı frontend oturumunu, frontend'i durdurmak da onun açtığı tarayıcı debug oturumunu kapatır. `Ctrl+Shift+B` API build task'ını çalıştırır.
+
+Node/npm ve dotnet, VS Code'un PATH'inde bulunmalıdır. Kurulumdan sonra VS Code zaten açıksa yeniden açın. Tarayıcı profili Chrome kullanır. 5187 veya 5173 portunda daha önce başlattığınız bir uygulama varsa önce o oturumu durdurun; Vite yanlış bir porta geçmek yerine açıkça hata verir.
+
+API'nin çalışma dizini proje klasörüdür; mevcut `App_Data` SQLite verisi ve proje dokümanları kullanılır. Migration/seed, normal API başlangıcındaki gibi çalışır. Bu ayarlar veritabanını sıfırlamaz.
+
+Yapılandırma: [launch.json](.vscode/launch.json), [tasks.json](.vscode/tasks.json). Başlatma zinciri VS Code'un [serverReadyAction](https://code.visualstudio.com/docs/debugtest/debugging-configuration#_automatically-open-a-uri-when-debugging-a-server-program) desteğini kullanır.
+
 ## Migration
 
 Uygulama başlangıcında `Database.MigrateAsync()` çalışır. Yeni migration oluşturmak için:
