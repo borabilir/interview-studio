@@ -161,3 +161,7 @@ Kanonik kaynaklar: Ledgerly'deki `docs/architecture/03-ledger-persistence.md`, `
 ## Mülakatta nasıl anlatırım?
 
 > Persistence verinin uygulama kapandıktan sonra da saklanmasıdır. Journal başlığı ve posting'leri ayrı ayrı commit edince son satırın hatası yarım kayıt bırakabiliyor. Bunu gerçek PostgreSQL'de reproduce ettim. Repository'yi bütün journal'ı hazırlayacak şekilde kurup tek Unit of Work ile kaydettim. Aynı hata altında önceki INSERT'ler çalışmış olsa da yeni bağlantıda hiçbir journal satırı kalmadığını doğruladım. Bu atomik kayıt garantisi; bakiye ve idempotency kuralları ayrıca ele alınacak.
+
+## Bu bölümden sonra
+
+Yukarıdaki 90 test ve kapsam, persistence adımının tarihsel kaydıdır. [22. bölümde](22-test-bakiyesi-yatirma.md) test yatırması, ilk kullanımda hesap açma, bakiye güncelleme ve concurrency kontrolü tamamlandı. İki ledger hesap unique constraint hatası artık LedgerWriteConflictException/409 olarak çevriliyor; diğer database hataları aynı dar sınırları koruyor.

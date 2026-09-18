@@ -21,7 +21,7 @@ Yol haritası takvim değil, öğrenme sırasıdır. Bir aşama yalnızca kod ya
 
 ## Aşama 1 — Basit çalışan çekirdek
 
-**Durum (2026-09-16):** Devam ediyor. Create Wallet, Get Wallet (ID ile okuma), PostgreSQL ve HTTP testleri tamamlandı. POST Location üzerinden yeni wallet okunabiliyor. Küçük bir concurrency ön lab'ında aynı wallet'ın eşzamanlı oluşturulması 201/409 ile doğrulandı; bu, Aşama 2'deki double-spending veya idempotency çalışmalarının tamamlandığı anlamına gelmez. Double-entry ledger için dengeli JournalEntry/Posting domain modeli ve 29 yeni domain testi tamamlandı; [19. bölüm](19-double-entry-ledger-domain.md). LedgerAccount domain modeli ve 5 yeni testi de tamamlandı; [20. bölüm](20-ledger-account-domain.md). Hesap/journal/posting persistence ve atomik kayıt deneyi tamamlandı; [21. bölüm](21-ledger-persistence-ve-atomiklik.md). Otomatik hesap hazırlama, test bakiyesi yatırma ve transfer sıradadır. Toplam 90 test geçti.
+**Durum (2026-09-17):** Devam ediyor. Create Wallet, Get Wallet, ledger domain ve persistence tamamlandı. [Test yatırması](22-test-bakiyesi-yatirma.md) ilk kullanımda hesap hazırlıyor; bakiye ve journal birlikte kaydediliyor. Bakiye yarışı reproduce edildi ve optimistic concurrency ile conflict davranışı eklendi. Toplam 124 test geçti. Transfer ve işlem geçmişi API'si henüz yok. Aynı başarılı yatırmayı tekrar göndermek iki finansal etki oluşturuyor; sıradaki uygun lab idempotency. Bu ön çalışmalar Aşama 2'nin tamamlandığı anlamına gelmez.
 
 - Tek ASP.NET Core uygulaması
 - İlişkisel veritabanı
@@ -107,3 +107,5 @@ Bu aşamanın amacı dağıtık sistem kurmak değil, doğruluk için ölçüleb
 - Multi-region tasarım değerlendirmesi
 
 > Yol haritası bir teknoloji checklist'i değildir. Bir problem oluşmazsa ilgili çözüm ertelenebilir veya tamamen reddedilebilir.
+
+[Type ve Purpose: hesabın amacı](23-ledger-account-purpose.md) ile Wallet/TestFunding rolleri model ve database kurallarında açıkça ifade ediliyor.
