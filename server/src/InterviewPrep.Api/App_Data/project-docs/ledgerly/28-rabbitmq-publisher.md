@@ -298,7 +298,7 @@ Mesajın kaybolmasındansa tekrar gelmesini kabul ediyoruz. Bunun bedeli, consum
 
 ## Şu anda eksik olanlar neler?
 
-- Queue'yu okuyup MongoDB işlem geçmişi oluşturacak consumer henüz yok.
+- Queue'yu okuyup MongoDB işlem geçmişi oluşturacak consumer henüz yok. Ayrı worker ve MongoDB bağlantı zemini sonraki bölümde kuruldu.
 - Consumer acknowledgement davranışı henüz uygulanmadı.
 - Duplicate event için Inbox/Idempotent Consumer yok.
 - Sürekli hata veren mesajlar için dead-letter queue yok.
