@@ -39,7 +39,7 @@ Ledgerly
           └─ İşlem geçmişi read model'i
 ```
 
-Ledgerly henüz gerçek RabbitMQ kullanmıyor. Şu anda broker'a çıkacak sınırı, kalıcı Outbox'ı, worker'ı ve hata senaryosunu hazırladık. RabbitMQ adaptörü bir sonraki adım olacak.
+Bu bölüm yazıldığında Ledgerly henüz gerçek RabbitMQ kullanmıyordu; önce broker sınırını, kalıcı Outbox'ı, worker'ı ve hata senaryosunu hazırladık. Gerçek RabbitMQ adaptörü daha sonra bir sonraki bölümde eklendi.
 
 ## Transactional Outbox nedir?
 
@@ -303,7 +303,7 @@ Worker uygulama kapanırken host tarafından durdurulur. Integration testlerinde
 
 `IIntegrationEventPublisher`, mesajın nereye ve nasıl gönderileceğini application akışından ayırıyor.
 
-Şu anda `LoggingIntegrationEventPublisher` kullanıyoruz. Bu gerçek broker değildir; event sınırının çalışan baseline'ıdır. Sonraki adımda bu interface'in RabbitMQ implementasyonunu yazacağız.
+Bu adımın ilk sürümünde `LoggingIntegrationEventPublisher` kullandık. Bu gerçek broker değildi; event sınırının çalışan baseline'ıydı. Sonraki bölümde aynı interface'in RabbitMQ implementasyonu eklendi.
 
 ## Uygulama akışının tamamı
 
@@ -385,7 +385,7 @@ Consumer aynı `EventId` değerini daha önce işleyip işlemediğini kontrol et
 
 Şu anda bilinçli olarak bırakılan sınırlar:
 
-- Gerçek RabbitMQ publisher henüz yok.
+- Bu bölümün ilk sürümünde gerçek RabbitMQ publisher yoktu; sonraki adımda eklendi.
 - Retry işlemlerinde exponential backoff ve jitter yok.
 - Sürekli hata veren poison mesajlar için dead-letter politikası yok.
 - İşlenmiş Outbox satırları için retention veya arşivleme yok.
