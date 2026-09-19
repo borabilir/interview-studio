@@ -114,6 +114,7 @@ Bu projenin mevcut trafik varsayımında optimistic concurrency seçtik. Aynı w
 
 ```http
 POST /api/transfers
+Idempotency-Key: benzersiz-transfer-anahtari
 Content-Type: application/json
 
 {
@@ -144,9 +145,9 @@ hedeflerin toplamı 80 TRY
 1 journal ve 2 posting
 ```
 
-## Sırada hangi problem var?
+## Sonraki adımda hangi problem çözüldü?
 
-Transferin şu anda ayrı bir transfer kaydı veya durum makinesi yok; journal makbuzu dönüyor. Aynı mantıksal transfer bağlantı sorunu nedeniyle sırayla iki kez gönderilirse iki ayrı transfer sayılabilir. Test yatırmasında öğrendiğimiz idempotency yaklaşımını transfer kimliği için genelleştirmek sıradaki uygun senaryodur.
+Bu milestone tamamlandığında transferin ayrı bir kaydı yoktu ve bağlantı sorunu nedeniyle aynı istek tekrar gönderilirse para iki kez taşınabiliyordu. Bir sonraki bölümde `Idempotency-Key`, kalıcı `TransferId` ve `wallet_transfers` kaydı eklenerek bu açık kapatıldı: [Transfer Idempotency](26-transfer-idempotency.md).
 
 ## Mülakatta nasıl anlatırım?
 
